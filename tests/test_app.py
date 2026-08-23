@@ -16,6 +16,7 @@ os.environ["MALICA_ADMIN_PIN"] = "1234"
 os.environ.pop("MALICA_EXT_URL", None)
 
 import app  # noqa: E402
+from malica import auth, config, storage  # noqa: E402
 
 
 class Client:
@@ -72,8 +73,8 @@ class Client:
 
 class MalicaTests(unittest.TestCase):
     def setUp(self):
-        app.DATA_DIR = tempfile.mkdtemp()
-        app._PIN_FAILS.clear()
+        config.DATA_DIR = tempfile.mkdtemp()
+        auth._PIN_FAILS.clear()
         self.c = Client()
 
     # -- auth -------------------------------------------------------------
@@ -119,7 +120,7 @@ class MalicaTests(unittest.TestCase):
 
     def _day(self, **kw):
         body = {"restaurant": "Pinsarna", "url": "https://wolt.com/sl/svn/ljubljana/restaurant/pinsarna",
-                "proposedBy": "Ana", "orderer": "Ana", "date": app._now().strftime("%Y-%m-%d"), "deadline": ""}
+                "proposedBy": "Ana", "orderer": "Ana", "date": storage._now().strftime("%Y-%m-%d"), "deadline": ""}
         body.update(kw)
         code, j = self.c.post("/api/days", body)
         self.assertEqual(code, 200, j)
@@ -190,8 +191,8 @@ class MalicaTests(unittest.TestCase):
         self._login()
         code, j = self.c.post("/api/wolt/extlog", {"who": "Ana", "ok": False, "text": "HTTP 403"})
         self.assertEqual(code, 200)
-        gid = app.load_groups()["groups"][0]["id"]
-        log = app.read_log(gid, 1)
+        gid = storage.load_groups()["groups"][0]["id"]
+        log = storage.read_log(gid, 1)
         self.assertIn("NAPAKA", log[0]["text"])
         self.assertEqual(log[0]["who"], "Ana")
 
@@ -234,8 +235,8 @@ class MalicaTests(unittest.TestCase):
     def test_corrupt_data_file_recovers_from_history(self):
         self._login()
         self._day()
-        gid = app.load_groups()["groups"][0]["id"]
-        with open(os.path.join(app.DATA_DIR, gid + ".json"), "w") as f:
+        gid = storage.load_groups()["groups"][0]["id"]
+        with open(os.path.join(config.DATA_DIR, gid + ".json"), "w") as f:
             f.write("{corrupt")
         code, j = self.c.get("/api/state")
         self.assertEqual(code, 200)

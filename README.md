@@ -17,7 +17,7 @@ Live instance (Slovenian UI): **https://malica.stavio.net**
 - **Live Wolt menus.** Restaurant search with filters and menu preview; dishes are picked with real options and prices, so the summary matches the Wolt basket.
 - **Phone-friendly "ordering mode"** (`/o/<day>`): a clean checklist with a deep link to every dish on Wolt, reachable via QR code from the desktop summary.
 - **Fair split.** Enter what you actually paid on Wolt; the difference to the food total (delivery, service fee, tip, discounts) is split proportionally or evenly. Settle-up view with "paid" checkmarks.
-- **Browser extension (Chrome / Edge)** — `extension/`: when you are today's orderer, one click moves the whole team's order, with options and quantities, into *your* Wolt basket. After you pay, it can read the final amount from your Wolt order history and close the day in Malica. Nothing is stored; your Wolt session never leaves your browser.
+- **Browser extension (Chrome / Edge)** — `extension/`, published on the [Chrome Web Store](https://chromewebstore.google.com/detail/olnafjjoaojbmnogdconffbmmfhchcna): when you are today's orderer, one click moves the whole team's order, with options and quantities, into *your* Wolt basket. After you pay, it can read the final amount from your Wolt order history and close the day in Malica. Nothing is stored; your Wolt session never leaves your browser.
 - **Hardened basics.** HMAC-signed cookies, constant-time PIN checks with lockout, path-traversal-safe static serving, atomic writes, recovery from a corrupted data file, 16 regression tests.
 
 ## Project layout
@@ -59,7 +59,7 @@ A `.secret` file (HMAC key for cookies) is generated automatically next to `app.
 
 ## Browser extension
 
-Wolt has no public API; the extension talks to the same endpoints Wolt's own web app uses, from a `wolt.com` tab in your browser, using your existing login. It requests a single permission (`cookies` for `wolt.com`) plus host access to `wolt.com` and the Malica instance. Build the store package with:
+Install from the **[Chrome Web Store](https://chromewebstore.google.com/detail/olnafjjoaojbmnogdconffbmmfhchcna)** (Edge users: enable "Allow extensions from other stores" first). Wolt has no public API; the extension talks to the same endpoints Wolt's own web app uses, from a `wolt.com` tab in your browser, using your existing login. It requests a single permission (`cookies` for `wolt.com`) plus host access to `wolt.com` and the Malica instance. Build the store package with:
 
 ```bash
 python tools/pack_extension.py

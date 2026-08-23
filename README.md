@@ -1,5 +1,7 @@
 # Malica — group lunch ordering on top of Wolt
 
+[![CI](https://github.com/zkomac/malica/actions/workflows/ci.yml/badge.svg)](https://github.com/zkomac/malica/actions/workflows/ci.yml)
+
 **Malica** ("snack"/"lunch break" in Slovenian) turns the daily *"what are we ordering, who's ordering, how much do I owe you?"* chaos into a two-minute routine:
 
 1. Someone proposes a restaurant (searched live on Wolt).
@@ -18,21 +20,28 @@ Live instance (Slovenian UI): **https://malica.stavio.net**
 - **Phone-friendly "ordering mode"** (`/o/<day>`): a clean checklist with a deep link to every dish on Wolt, reachable via QR code from the desktop summary.
 - **Fair split.** Enter what you actually paid on Wolt; the difference to the food total (delivery, service fee, tip, discounts) is split proportionally or evenly. Settle-up view with "paid" checkmarks.
 - **Browser extension (Chrome / Edge)** — `extension/`, published on the [Chrome Web Store](https://chromewebstore.google.com/detail/olnafjjoaojbmnogdconffbmmfhchcna): when you are today's orderer, one click moves the whole team's order, with options and quantities, into *your* Wolt basket. After you pay, it can read the final amount from your Wolt order history and close the day in Malica. Nothing is stored; your Wolt session never leaves your browser.
-- **Hardened basics.** HMAC-signed cookies, constant-time PIN checks with lockout, path-traversal-safe static serving, atomic writes, recovery from a corrupted data file, 16 regression tests.
+- **Hardened basics.** HMAC-signed cookies, constant-time PIN checks with lockout, path-traversal-safe static serving, atomic writes, recovery from a corrupted data file, regression tests run in CI.
 
 ## Project layout
 
 ```
-app.py                 WSGI application (server, API, Wolt proxy, admin)
-server.py              Local dev server:  python server.py [port]
-static/index.html      The whole UI (vanilla JS, Slovenian)
-static/qr.js           Dependency-free QR code generator
-static/privacy.html    Privacy policy (required by the Chrome Web Store)
-extension/             Chrome/Edge extension "Malica ↔ Wolt" (Manifest V3)
-deploy/                install.sh for AlmaLinux 9 + nginx + gunicorn + Let's Encrypt
-tests/test_app.py      Server tests (python -m unittest discover -s tests)
+app.py                   WSGI entry point (gunicorn app:application)
+malica/                  Server package — see ARCHITECTURE.md
+  web.py                 routing            api.py      group mutations
+  storage.py             JSON persistence   wolt.py     Wolt client + cache
+  auth.py                sessions, PIN      admin.py    admin API
+server.py                Local dev server:  python server.py [port]
+static/index.html        UI shell; loads app.css and static/js/*.js (vanilla JS, Slovenian)
+static/js/               core, split, views, modals, admin, order-mode, main
+static/qr.js             Dependency-free QR code generator
+static/privacy.html      Privacy policy (required by the Chrome Web Store)
+extension/               Chrome/Edge extension "Malica ↔ Wolt" (Manifest V3)
+deploy/                  install.sh for AlmaLinux 9 + nginx + gunicorn + Let's Encrypt
+tests/test_app.py        Server tests (python -m unittest discover -s tests)
 tools/pack_extension.py  Builds the Web Store zip from extension/
 ```
+
+Design notes and the reasoning behind the constraints are in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Run locally
 

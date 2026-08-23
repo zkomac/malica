@@ -21,7 +21,7 @@ The script installs Python, nginx and certbot, creates a `malica` system user an
 ## Day-to-day
 | Task | Command |
 |---|---|
-| Update the app | `scp app.py static/index.html root@SERVER:/opt/malica/...` then `systemctl restart malica` |
+| Update the app | `scp -r app.py malica static root@SERVER:/opt/malica/` then `systemctl restart malica` |
 | Logs | `journalctl -u malica -f` |
 | Back up data | `scp -r root@SERVER:/opt/malica/data ./backup/` |
 | Status | `systemctl status malica nginx` |

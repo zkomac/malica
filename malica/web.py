@@ -19,7 +19,7 @@ def application(environ, start_response):
     method = environ.get("REQUEST_METHOD", "GET")
     parts = [p for p in path.split("/") if p]
 
-    if path in ("/icon.svg", "/apple-touch-icon.png", "/manifest.json", "/og.png", "/privacy.html", "/wolt-logo.png") and method == "GET":
+    if path in ("/icon.svg", "/apple-touch-icon.png", "/manifest.json", "/og.png", "/privacy.html", "/wolt-logo.png", "/app.css", "/qr.js") or path.startswith("/js/") and method == "GET":
         return _static(start_response, path)
 
     # ---- vstop s config.PIN-om skupine

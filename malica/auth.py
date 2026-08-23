@@ -12,7 +12,7 @@ import uuid
 from . import config
 from .storage import _eq, find_group
 
-_SECRET_FILE = os.path.join(config.BASE, ".secret")
+_SECRET_FILE = os.environ.get("MALICA_SECRET_FILE", "").strip() or os.path.join(config.BASE, ".secret")
 
 
 def _secret():

@@ -1,0 +1,17 @@
+.git
+.github
+__pycache__
+**/__pycache__
+*.pyc
+data/
+data.json
+.secret
+*.env
+HANDOFF.md
+deploy/
+extension/
+store-assets/
+tests/
+tools/
+*.zip
+*.md

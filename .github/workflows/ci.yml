@@ -24,3 +24,17 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Extension package builds
         run: python tools/pack_extension.py
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t malica:ci .
+      - name: Smoke test
+        run: |
+          docker run -d --name malica -p 8000:8000 -e MALICA_PIN=1234 malica:ci
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8000/manifest.json >/dev/null && break; sleep 1; done
+          curl -fsS -o /dev/null -w "%{http_code}
+" http://127.0.0.1:8000/
+          docker logs malica

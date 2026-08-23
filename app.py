@@ -676,6 +676,9 @@ button{width:100%;margin-top:10px;padding:12px;background:#009de0;color:#fff;bor
 .err{color:#e0453a;font-size:.9rem;margin-top:10px}
 .foot{color:#a3a3a3;font-size:.78rem;margin-top:18px}
 .extnote{background:#eef8fc;border:1px solid #cfeaf7;border-radius:10px;padding:12px 14px;margin:16px 0 0;font-size:.85rem;color:#333;line-height:1.45;text-align:left}
+.extnote.extok{background:#edf9f1;border-color:#bfe6cc}
+.extnote .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#1aa35b;margin-right:8px;vertical-align:middle;box-shadow:0 0 0 3px #d3f0dd}
+.extnote .sub{color:#717173;font-size:.8rem}
 .extbtn{display:inline-block;margin-top:8px;background:#009de0;color:#fff;padding:8px 14px;border-radius:8px;font-weight:600;text-decoration:none;font-size:.85rem}
 .woltbox{margin:18px 0 0;padding:18px 16px 20px;border:1px solid #e4e4e5;border-radius:12px;text-align:center;background:#fff}
 .woltbox .sub{font-size:.84rem;color:#717173;line-height:1.5;margin:10px 0 14px}
@@ -698,6 +701,15 @@ button{width:100%;margin-top:10px;padding:12px;background:#009de0;color:#fff;bor
     <button>Vstopi</button>__ERR__
   </form>
   __EXT__
+  <script>
+  // Razširitev Malica ↔ Wolt ob nalaganju pošlje sporočilo "ready" → pokaži zelen status namesto poziva.
+  window.addEventListener('message', function(ev){
+    if(ev.source!==window || !ev.data || ev.data.malicaWolt!=='ready') return;
+    var n=document.getElementById('extnote'); if(!n) return;
+    n.className='extnote extok';
+    n.innerHTML='<span class="dot"></span><b>Razširitev Malica ↔ Wolt je nameščena</b>'+(ev.data.version?' <span class="sub">v'+String(ev.data.version).replace(/[^0-9.]/g,'')+'</span>':'')+'<br>Kdor naroča, z enim klikom prenese vse jedi v svojo Wolt košarico.';
+  });
+  </script>
   <div class="woltbox">
     <div class="woltlogo"><img src="/wolt-logo.png" alt="Wolt" height="34"></div>
     <div class="sub">Tisti, ki naroča, odda skupno naročilo s svojim Wolt računom. Prijavi se na Woltu v novem zavihku in se potem vrni sem.</div>
@@ -706,7 +718,7 @@ button{width:100%;margin-top:10px;padding:12px;background:#009de0;color:#fff;bor
   <div class="foot">Samo za tvoje sodelavce — noter prideš s PIN-om. Malica ni povezana z Woltom.</div>
 </div></body></html>"""
 
-EXT_NOTE = """<div class="extnote">💻 <b>Na računalniku (Chrome ali Edge):</b> namesti razširitev <b>Malica ↔ Wolt</b> — kdor naroča, z enim klikom prenese vse jedi v svojo Wolt košarico.<br><a class="extbtn" href="%s" target="_blank" rel="noopener">Namesti razširitev ↗</a></div>"""
+EXT_NOTE = """<div class="extnote" id="extnote">💻 <b>Na računalniku (Chrome ali Edge):</b> namesti razširitev <b>Malica ↔ Wolt</b> — kdor naroča, z enim klikom prenese vse jedi v svojo Wolt košarico.<br><a class="extbtn" href="%s" target="_blank" rel="noopener">Namesti razširitev ↗</a></div>"""
 
 _PIN_FAILS = {}  # ip -> [count, until]
 

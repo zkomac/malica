@@ -9,7 +9,8 @@ malica.env
 # local/session files
 HANDOFF.md
 deploy/NAVODILA.md
-.claude/
+.vscode/
+.idea/
 __pycache__/
 *.pyc
 

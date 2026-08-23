@@ -73,6 +73,10 @@ def wolt_venues(lat, lon, force=False):
                     continue
                 seen.add(v["id"])
                 rating = v.get("rating") if isinstance(v.get("rating"), dict) else {}
+                cats = []  # kanonicni id-ji kategorij (ujemajo se s filters[].id; tags so lokalizirani)
+                for f in (it.get("filtering") or {}).get("filters", []):
+                    if f.get("id") == "primary":
+                        cats = [c for c in f.get("values", []) if isinstance(c, str)]
                 out.append({
                     "id": v.get("id"),
                     "slug": v.get("slug"),
@@ -81,6 +85,7 @@ def wolt_venues(lat, lon, force=False):
                     "address": v.get("address") or "",
                     "image": _img(it.get("image")),
                     "tags": v.get("tags") or [],
+                    "cats": cats,
                     "rating": rating.get("score"),
                     "ratingVolume": rating.get("volume"),
                     "estimate": v.get("estimate_range") or "",

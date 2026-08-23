@@ -125,7 +125,7 @@ async function pickerModal(){
       <div class="m">${v.rating?`<span class="r">⭐ ${v.rating}</span>`:''}<span>${'€'.repeat(v.priceRange||1)}</span><span>${esc(v.tags.slice(0,3).join(' · '))}</span></div></div>`;
 
   const list = () => {
-    const ok = v => (!openOnly || v.online) && (!filter || v.tags.includes(filter)) && (!q || matches(q, v.name) || matches(q, v.tags.join(' ')+' '+v.description));
+    const ok = v => (!openOnly || v.online) && (!filter || (v.cats||v.tags).includes(filter)) && (!q || matches(q, v.name) || matches(q, v.tags.join(' ')+' '+(v.cats||[]).join(' ')+' '+v.description));
     const vs = data.venues.filter(ok).sort(byRating);
     const fav = !q && !filter ? vs.filter(v=>prev[v.slug]).sort((a,b)=>prev[b.slug]-prev[a.slug]) : [];
     let h = '';

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="sl"><head><meta charset="utf-8">
+<style>
+  body{width:320px;margin:0;padding:16px;font-family:-apple-system,"Segoe UI",Roboto,sans-serif;color:#202125;font-size:14px}
+  h1{font-size:18px;color:#009de0;margin:0 0 4px}
+  p,.sub{margin:4px 0;color:#717173;line-height:1.4;font-size:13px}
+  .step{display:flex;gap:10px;align-items:flex-start;margin:9px 0}
+  .n{flex:0 0 22px;height:22px;border-radius:50%;background:#009de0;color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .ok .n{background:#1aa35b}.bad .n{background:#e0453a}
+  select{width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid #e4e4e5;font-size:14px;margin-top:6px}
+  .day{display:flex;flex-direction:column;gap:6px;border:1px solid #e4e4e5;border-radius:10px;padding:10px;margin-top:8px}
+  button,.btn{display:block;width:100%;box-sizing:border-box;padding:9px 10px;border-radius:8px;background:#009de0;color:#fff;border:none;font-weight:600;cursor:pointer;font-size:14px;text-align:center;text-decoration:none;margin-top:8px}
+  button:disabled{opacity:.5}
+  a{color:#009de0}
+  .btn.sm{padding:7px 10px;font-size:13px;margin-top:6px}
+  .ghost{background:#fff;color:#009de0;border:1px solid #009de0}
+  .day button{margin-top:6px}
+  .spin{display:inline-block;width:10px;height:10px;border:2px solid #c9e9f8;border-top-color:#009de0;border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle;margin-right:4px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .msg{margin-top:10px;font-weight:600}
+  .msg.ok{color:#1aa35b}.msg.bad{color:#e0453a}.warn{color:#9a5b00}
+  .foot{margin-top:14px;font-size:11px;color:#a3a3a3}
+</style></head><body>
+<h1>Malica ↔ Wolt</h1>
+<p>Naročilo sodelavcev z enim klikom v tvojo Wolt košarico. Plačaš sam na Woltu.</p>
+<div class="step" id="s1"><span class="n">1</span><div style="flex:1">Prijavljen na <a href="https://wolt.com" target="_blank">wolt.com</a><br><span id="s1t" class="sub">preverjam…</span><div id="s1a"></div></div></div>
+<div class="step" id="s2"><span class="n">2</span><div style="flex:1">Prijavljen v <a href="https://malica.stavio.net" target="_blank">Malico</a><br><span id="s2t" class="sub">preverjam…</span><div id="s2a"></div></div></div>
+<div class="step" id="s3"><span class="n">3</span><div style="flex:1">Jaz sem<select id="who"></select><div id="days"></div></div></div>
+<div class="msg" id="msg"></div>
+<button class="ghost" id="recheck">↻ Preveri znova</button>
+<div class="foot">Nič se ne shranjuje: Malica dobi samo tvoje ime, Wolt prijava ostane v tem brskalniku.</div>
+<script src="popup.js"></script>
+</body></html>

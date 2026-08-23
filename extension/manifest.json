@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Malica ↔ Wolt",
+  "version": "1.1.1",
+  "description": "Malica: sodelavci skupaj naročijo malico prek Wolta. Z enim klikom preneseš vse jedi v svojo Wolt košarico, Malica razdeli stroške.",
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Malica ↔ Wolt"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://malica.stavio.net/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://wolt.com/*"
+      ],
+      "js": [
+        "wolt-content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "cookies"
+  ],
+  "host_permissions": [
+    "https://wolt.com/*",
+    "https://*.wolt.com/*",
+    "https://malica.stavio.net/*"
+  ]
+}

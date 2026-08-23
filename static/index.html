@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Malica · skupinsko naročanje</title>
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#009de0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Malica">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Malica — skupinsko naročanje kosila">
+<meta property="og:description" content="Sodelavci skupaj naročijo malico prek Wolta: vsak si izbere svoje, eden naroči, Malica razdeli stroške.">
+<meta property="og:image" content="https://malica.stavio.net/og.png">
+<meta property="og:url" content="https://malica.stavio.net/">
+<meta name="twitter:card" content="summary_large_image">
+<script src="/qr.js"></script>
+<style>
+  :root{
+    --blue:#009de0;--blue-dark:#0085bd;--blue-soft:#e6f5fc;
+    --ink:#202125;--ink-2:#717173;--ink-3:#a3a3a3;
+    --line:#e4e4e5;--line-soft:#f0f0f0;--bg:#fff;--page:#fff;--chip:#f4f4f4;
+    --green:#1aa35b;--red:#e0453a;--amber:#f59e0b;
+    --r:8px;--r-lg:16px;--shadow:0 2px 8px rgba(0,0,0,.08),0 0 1px rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{margin:0;font-family:"Omnes",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--page);line-height:1.4;-webkit-font-smoothing:antialiased}
+  a{color:var(--blue);text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:.95rem}
+  input,select{font-family:inherit;font-size:.95rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;width:100%;outline:none}
+  input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,157,224,.15)}
+  label{display:block;font-size:.8rem;font-weight:600;color:var(--ink-2);margin:0 0 4px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:var(--r);font-weight:600;background:var(--chip);color:var(--ink);white-space:nowrap}
+  .btn:hover{background:#e9e9e9}
+  .btn.primary{background:var(--blue);color:#fff}
+  .btn.primary:hover{background:var(--blue-dark)}
+  .btn.ghost{background:transparent;color:var(--blue)}
+  .btn.ghost:hover{background:var(--blue-soft)}
+  .btn.danger{color:var(--red)}
+  .btn.sm{padding:6px 12px;font-size:.85rem}
+  .btn:disabled{opacity:.45;cursor:default}
+  .icon{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--chip);font-size:1rem}
+  .icon:hover{background:#e9e9e9}
+
+  /* header */
+  header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line-soft);height:64px;display:flex;align-items:center;padding:0 24px;gap:16px}
+  .logo{font-size:1.7rem;font-weight:800;color:var(--blue);letter-spacing:-.03em;line-height:1}
+  .logo small{display:block;font-size:.65rem;font-weight:600;color:var(--ink-2);letter-spacing:.02em;margin-top:2px}
+  header .grow{flex:1}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border-radius:999px;padding:8px 14px;font-size:.9rem;font-weight:600;white-space:nowrap}
+  .chip:hover{background:#e9e9e9}
+  .chip select{border:none;background:transparent;padding:0;width:auto;font-weight:600;font-size:.9rem}
+  .chip select:focus{box-shadow:none}
+
+  /* days strip */
+  .days{display:flex;gap:10px;padding:14px 24px;overflow-x:auto;border-bottom:1px solid var(--line-soft);scrollbar-width:none}
+  .days::-webkit-scrollbar{display:none}
+  .future{margin-left:auto;flex:0 0 auto;display:flex;flex-direction:column;gap:4px;padding-left:16px;border-left:1px dashed var(--line)}
+  .future-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+  .future-list{display:flex;gap:8px}.future .day{min-width:130px;padding:6px 11px;background:#fafcff;border-color:#dcecf6}
+  .future .day b{font-size:.9rem}.future .day.active{background:#eaf6fd}
+  .day{flex:0 0 auto;border:1px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;background:#fff;min-width:150px}
+  .day:hover{border-color:#ccc}
+  .day.active{border-color:var(--blue);background:var(--blue-soft)}
+  .day b{display:block;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+  .day span{font-size:.75rem;color:var(--ink-2)}
+  .day .st{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:var(--amber)}
+  .day .st.ordered{background:var(--green)}
+  .day .tag-g{display:inline-block;font-style:normal;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 7px;border-radius:999px;margin-bottom:3px;background:var(--chip);color:var(--ink-2)}
+  .day .tag-g.g0{background:var(--blue);color:#fff}
+  .day .tag-g.g1{background:#e3f6eb;color:#0f6e3a}
+  .day.g2{opacity:.75}
+  .day{position:relative}
+  .day .delchip{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--chip);color:var(--ink-2);font-size:1rem;line-height:1;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+  .day:hover .delchip,.day.active .delchip{opacity:1}
+  .day .delchip:hover{background:var(--red);color:#fff}
+  @media (hover:none){.day .delchip{opacity:1}}
+  .day.add b{max-width:none}
+  .day.add{border-style:dashed;color:var(--blue);font-weight:600}
+  .day.hist{color:var(--ink-2);background:var(--chip);border-color:transparent}
+  .venue-block.done{opacity:.62;filter:grayscale(.35)}
+  body.order-mode main{padding:0;max-width:560px}
+  .ordermode{padding:14px 16px 40px}
+  .om-head{display:flex;align-items:center;justify-content:space-between;padding:6px 0 10px}
+  .om-back{font-weight:600}.om-progress{font-weight:700;color:var(--blue)}
+  .ordermode h1{font-size:1.5rem;margin:6px 0 2px}
+  .om-hint{background:var(--blue-soft);border-radius:10px;padding:10px 12px;font-size:.9rem;color:var(--ink);margin:12px 0}
+  .om-list{display:flex;flex-direction:column;gap:10px}
+  .om-item{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:12px}
+  .om-item.done{background:var(--blue-soft);border-color:#bfe5f7}
+  .om-check{flex:0 0 34px;height:34px;border-radius:50%;border:2px solid var(--line);background:#fff;color:var(--green);font-size:1.1rem;font-weight:800}
+  .om-item.done .om-check{border-color:var(--green);background:var(--green);color:#fff}
+  .om-body{flex:1;min-width:0}.om-name{font-size:1.02rem}
+  .om-open{flex:0 0 auto;padding:10px 14px}
+  .om-foot{margin-top:18px}
+  .om-total{display:flex;justify-content:space-between;font-size:1.1rem;padding:10px 0;border-top:2px solid var(--line);margin-bottom:10px}
+  .om-foot .btn{width:100%}
+  .om-fin{margin-top:14px}.om-fin input,.om-fin select{width:100%;box-sizing:border-box}
+  .os-qr{text-align:center}
+  .os-qr canvas{width:170px;height:170px;border:1px solid var(--line);border-radius:8px;display:inline-block}
+  .os-qr .sub{max-width:280px;margin:8px auto 0}
+  .os-mobilebtn{display:none}
+  @media (max-width:640px){ .os-qr{display:none} .os-mobilebtn{display:block;width:100%} }
+  .venue-block.done .hero{max-height:120px}
+  .day.add b{color:var(--blue)}.day.add span{color:var(--ink-2);font-weight:400}
+
+  main{max-width:1100px;margin:0 auto;padding:0 24px 40px}
+  .hero{height:240px;border-radius:0 0 var(--r-lg) var(--r-lg);background:var(--chip) center/cover no-repeat;margin:0 -24px}
+  .venue-head{display:flex;gap:20px;align-items:flex-start;padding:22px 0 10px;flex-wrap:wrap}
+  .venue-head h1{margin:0 0 4px;font-size:1.9rem;letter-spacing:-.02em;line-height:1.15}
+  .venue-head .desc{color:var(--ink-2);margin-bottom:8px}
+  .meta{display:flex;gap:14px;flex-wrap:wrap;color:var(--ink-2);font-size:.9rem;align-items:center}
+  .meta .rate{display:inline-flex;align-items:center;gap:4px;color:var(--ink);font-weight:600}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:999px;background:#fff4e0;color:#9a5b00}
+  .status.ordered{background:#e3f6eb;color:#0f6e3a}
+  .status.late{background:#fdecea;color:#9b2c22}
+  .orderer-row{margin-top:10px;gap:10px}
+  .inline-sel{width:auto;padding:6px 10px;font-weight:600;border-radius:999px;background:var(--chip);border-color:transparent}
+  .actions{display:flex;gap:8px;margin-left:auto;align-items:center;flex-wrap:wrap}
+  .dd{position:relative}.dd-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);width:340px;max-width:calc(100vw - 24px);background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.16);padding:6px;z-index:50;text-align:left}
+  .dd.open .dd-menu{display:block}
+  .dd-head{padding:8px 12px 10px;border-bottom:1px solid var(--line);margin-bottom:6px;display:flex;flex-direction:column;gap:2px}
+  .dd-label{font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-2);padding:6px 12px 2px}
+  .dd-menu button{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;background:none;border:none;padding:9px 12px;border-radius:10px;font-size:.95rem;color:var(--ink);cursor:pointer;line-height:1.25}
+  .dd-menu button i{font-style:normal;width:22px;flex:0 0 22px;text-align:center;font-size:1.05rem}
+  .dd-menu button span{display:flex;flex-direction:column;gap:2px;font-weight:600}.dd-menu button small{font-weight:400;font-size:.78rem;color:var(--ink-2)}
+  .dd-menu button:hover{background:var(--chip)}.dd-menu button:disabled{opacity:.45;cursor:default}
+  .dd-menu button.danger{color:var(--red,#e0453a)}.dd-menu button.danger small{color:var(--red,#e0453a);opacity:.8}
+  .dd-sep{height:1px;background:var(--line);margin:6px 6px}
+
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:10px 0 20px;position:sticky;top:64px;background:#fff;z-index:10}
+  .tabs button{padding:12px 14px;font-weight:600;color:var(--ink-2);border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tabs button.active{color:var(--ink);border-color:var(--blue)}
+  .tabs button .n{background:var(--chip);border-radius:999px;padding:1px 7px;font-size:.75rem;margin-left:4px}
+
+  /* menu */
+  .cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none}
+  .cats::-webkit-scrollbar{display:none}
+  .cats a{cursor:pointer;flex:0 0 auto;padding:8px 14px;border-radius:999px;background:var(--chip);color:var(--ink);font-weight:600;font-size:.85rem}
+  .cats a:hover{background:#e9e9e9}
+  h2.cat{font-size:1.25rem;margin:26px 0 12px;letter-spacing:-.01em;scroll-margin-top:120px}
+  .items{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .item{display:flex;gap:12px;border:1px solid var(--line);border-radius:var(--r-lg);padding:14px;cursor:pointer;background:#fff;transition:box-shadow .15s;min-height:112px}
+  .item:hover{box-shadow:var(--shadow)}
+  .item.off{opacity:.5;cursor:default}
+  .item .t{flex:1;min-width:0}
+  .item .t b{display:block;font-size:1rem;margin-bottom:3px}
+  .item .t p{margin:0 0 6px;color:var(--ink-2);font-size:.85rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .item .t .p{font-weight:600;color:var(--blue)}
+  .item img{width:96px;height:96px;object-fit:cover;border-radius:var(--r);flex:0 0 96px;background:var(--chip)}
+  .item .plus{position:absolute;right:10px;bottom:10px}
+  .item{position:relative}
+  .item .plus{width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:1.3rem;font-weight:700}
+
+  /* menu + cart layout */
+  .menu-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
+  .menu-layout>*{min-width:0}
+  .cart{position:sticky;top:126px;border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;background:#fff;max-height:calc(100vh - 150px);overflow:auto;transition:box-shadow .3s}
+  .cart.flash{box-shadow:0 0 0 3px var(--blue-soft),0 0 0 4px var(--blue)}
+  .cart h3{margin:0 0 10px;font-size:1rem;display:flex;align-items:center;gap:8px}
+  .cart h3 .n{margin-left:auto;font-size:.8rem;color:var(--ink-2);font-weight:500}
+  .cart .person{margin:12px 0 4px;font-size:.8rem;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em}
+  .cart .person.me{color:var(--blue)}
+  .cart .line{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:.9rem}
+  .cart .line .q{flex:0 0 24px;color:var(--ink-2)}
+  .cart .line .nm{flex:1;min-width:0}
+  .cart .line .nm .sub{font-size:.78rem}
+  .cart .line .pr{white-space:nowrap;color:var(--ink-2)}
+  .cart .line .x{flex:0 0 auto;color:var(--ink-3);padding:0 4px;font-size:1.1rem;line-height:1}
+  .cart .line .x:hover{color:var(--red)}
+  .cart .tot{display:flex;justify-content:space-between;font-weight:700;padding-top:12px;margin-top:6px}
+  .cart .cta{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .cart .hint{color:var(--ink-2);font-size:.85rem;padding:14px 0}
+  .cartbar{display:none}
+  @media (max-width:900px){
+    .menu-layout{grid-template-columns:1fr}
+    .cart{display:none}
+    .cartbar{display:flex;position:fixed;left:12px;right:12px;bottom:12px;z-index:30;background:var(--blue);color:#fff;border-radius:999px;padding:12px 18px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);justify-content:space-between;align-items:center;cursor:pointer}
+  }
+
+  /* tables */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+  table{width:100%;border-collapse:collapse;font-size:.93rem}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  th{font-size:.75rem;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+  td.num,th.num{text-align:right;white-space:nowrap}
+  tr.total td{font-weight:700;border-top:2px solid var(--line);border-bottom:none}
+  tr.mine td{background:var(--blue-soft)}
+  .sub{color:var(--ink-2);font-size:.83rem}
+  .paid td{color:var(--ink-3);text-decoration:line-through}
+  .card{border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;margin-bottom:16px;background:#fff}
+  .card h3{margin:0 0 12px;font-size:1.05rem}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .row>div{flex:1;min-width:120px}
+  .row>div.auto{flex:0 0 auto;min-width:0}
+  pre.summary{background:var(--chip);padding:14px;border-radius:var(--r);white-space:pre-wrap;font:0.88rem ui-monospace,Consolas,monospace;margin:0 0 12px}
+  .empty{padding:50px 20px;text-align:center;color:var(--ink-2)}
+  .empty h2{color:var(--ink);margin:0 0 8px}
+  .tag{display:inline-block;background:var(--chip);border-radius:999px;padding:2px 8px;font-size:.75rem;color:var(--ink-2);margin-right:4px}
+  .pill-badge{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--blue-soft);color:var(--blue);margin-left:6px;vertical-align:middle}
+
+  /* modal */
+  .backdrop{position:fixed;inset:0;background:rgba(32,33,37,.5);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+  .modal{background:#fff;border-radius:var(--r-lg);width:100%;max-width:560px;max-height:92vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+  .modal.wide{max-width:1040px;height:92vh;display:flex;flex-direction:column}
+  .modal .close{position:absolute;top:12px;right:12px;z-index:2;background:#fff;box-shadow:var(--shadow)}
+  .modal .mimg{width:100%;height:260px;object-fit:cover;background:var(--chip);display:block}
+  .modal .body{padding:20px 24px}
+  .modal h2{margin:0 0 6px;font-size:1.4rem;letter-spacing:-.01em}
+  .modal .desc{color:var(--ink-2);margin:0 0 14px}
+  .opt{border-top:1px solid var(--line-soft);padding:14px 0}
+  .opt h4{margin:0 0 2px;font-size:.95rem}
+  .opt .req{font-size:.75rem;color:var(--ink-2);margin-bottom:8px}
+  .opt label.v{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:.93rem;font-weight:400;color:var(--ink);cursor:pointer}
+  .opt label.v input{width:18px;height:18px;accent-color:var(--blue);margin:0}
+  .opt label.v .pr{margin-left:auto;color:var(--ink-2)}
+  .foot{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line-soft);padding:14px 24px;display:flex;gap:12px;align-items:center}
+  .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px}
+  .stepper button{width:38px;height:38px;font-size:1.2rem;color:var(--blue)}
+  .stepper span{min-width:28px;text-align:center;font-weight:700}
+  .foot .btn.primary{flex:1;padding:12px}
+
+  /* venue picker */
+  .picker-head{padding:18px 24px 12px;border-bottom:1px solid var(--line-soft)}
+  .picker-head h2{margin:0 0 12px}
+  .search{position:relative}
+  .search input{padding-left:40px;border-radius:999px;background:var(--chip);border-color:transparent}
+  .search:before{content:"🔍";position:absolute;left:14px;top:50%;transform:translateY(-50%)}
+  .filters{display:flex;gap:8px;overflow-x:auto;padding-top:12px;scrollbar-width:none}
+  .filters button{flex:0 0 auto;padding:6px 12px;border-radius:999px;background:var(--chip);font-weight:600;font-size:.82rem}
+  .filters button.on{background:var(--ink);color:#fff}
+  .picker-body{overflow-y:auto;overflow-x:hidden;padding:18px 24px;flex:1}
+  .venues{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+  .venue{cursor:pointer;border-radius:var(--r-lg)}
+  .venue .img{position:relative;aspect-ratio:16/10;border-radius:var(--r-lg);background:var(--chip);overflow:hidden;transition:transform .15s}
+  .venue .img img{width:100%;height:100%;object-fit:cover;display:block}
+  .venue{min-width:0;overflow:hidden}
+  .venue:hover .img{transform:scale(1.02)}
+  .venue .est{position:absolute;right:8px;bottom:8px;background:#fff;border-radius:var(--r);padding:4px 8px;font-size:.75rem;font-weight:700;box-shadow:var(--shadow)}
+  .venue .off{position:absolute;inset:0;background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--ink-2)}
+  .venue b{display:block;margin-top:8px;font-size:.97rem}
+  .venue .d{color:var(--ink-2);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .venue .m{font-size:.8rem;color:var(--ink-2);margin-top:2px;display:flex;gap:8px}
+  .venue .m .r{color:var(--ink);font-weight:600}
+  .search .clr{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--ink-2);font-size:.9rem;padding:4px 8px}
+  .sec{font-size:1rem;margin:8px 0 12px;display:flex;align-items:center;gap:8px}
+  .sec+.venues{margin-bottom:26px}
+  .venue .prev{position:absolute;left:8px;top:8px;background:var(--blue);color:#fff;border-radius:999px;padding:3px 8px;font-size:.72rem;font-weight:700}
+  .vd h2{margin:14px 0 2px;font-size:1.5rem}
+  .vd-hero{height:200px;border-radius:var(--r-lg);background:var(--chip) center/cover no-repeat;margin-top:12px}
+  .vd .cats{margin-top:6px}
+  .picked{display:flex;gap:14px;align-items:center;padding:14px 24px;border-top:1px solid var(--line);background:#fff;flex-wrap:wrap;box-shadow:0 -6px 20px rgba(0,0,0,.06)}
+  .picked img{width:56px;height:56px;object-fit:cover;border-radius:var(--r)}
+  .picked .row{flex:1}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;opacity:0;transition:all .2s;pointer-events:none;z-index:99;font-weight:600}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  .chk{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft);cursor:pointer;font-weight:400}
+  .chk input{width:20px;height:20px;accent-color:var(--blue);margin:0;flex:0 0 auto}
+  .chk .q{font-weight:700;flex:0 0 30px}.chk .nm{flex:1;min-width:0}
+  .chk:has(input:checked) .nm{text-decoration:line-through;color:var(--ink-3)}
+  .steps{list-style:none;margin:14px 0;padding:0}
+  .steps li{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+  .steps .n{flex:0 0 32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .spinner{padding:40px;text-align:center;color:var(--ink-2)}
+  .foot-note{text-align:center;color:var(--ink-3);font-size:.8rem;padding:24px 16px 110px;border-top:1px solid var(--line-soft)}
+  .foot-note b{color:var(--ink-2);font-weight:600}
+  .banner.ok{background:#e3f6eb;border-color:#b7e4c7}
+  .banner{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--blue-soft);border:1px solid #bfe5f7;border-radius:var(--r-lg);padding:16px 20px;margin:18px 0 6px}
+  .welcome .names{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 16px}
+  .welcome .names button{padding:8px 14px;border-radius:999px;background:var(--chip);font-weight:600}
+  .welcome .names button:hover{background:var(--blue);color:#fff}
+  @media (max-width:640px){
+    header{padding:0 12px;gap:8px;height:56px}
+    .logo{font-size:1.35rem}.logo small{display:none}
+    #locBtn{padding:8px 10px}#locBtn #locLabel{display:none}
+    .chip{padding:6px 10px;font-size:.85rem}.chip select{max-width:120px;text-overflow:ellipsis}
+    .days{padding:10px 12px;gap:8px}.future{margin-left:4px;padding-left:10px}.day{min-width:150px;max-width:60vw;padding:7px 11px}.day b{max-width:150px}
+    .day.add{min-width:auto;flex:0 0 auto}.day.add b{white-space:nowrap}
+    main{padding:0 12px 90px}
+    .hero{margin:0 -12px;height:160px;border-radius:0}
+    .venue-head{padding:14px 0 6px;gap:10px}.venue-head h1{font-size:1.35rem}
+    .actions{margin-left:0;width:100%}
+    .meta{gap:10px;font-size:.85rem}
+    .tabs{top:56px;margin:6px -12px 14px;padding:0 12px;overflow-x:auto;scrollbar-width:none}
+    .tabs button{padding:10px 10px;font-size:.88rem;white-space:nowrap}
+    .items{grid-template-columns:1fr;gap:10px}
+    .item{padding:12px;min-height:0}.item img{width:80px;height:80px;flex-basis:80px}
+    th,td{padding:8px 6px;font-size:.85rem}
+    .banner{padding:14px;margin:12px 0 4px}.banner .btn{width:100%}
+    .backdrop{padding:0;align-items:flex-end}
+    .modal{max-width:none;max-height:94dvh;border-radius:var(--r-lg) var(--r-lg) 0 0}
+    .modal.wide{height:100dvh;max-height:100dvh;border-radius:0}
+    .modal .mimg{height:200px}.modal .body{padding:16px 16px}.foot{padding:12px 16px}
+    .picker-head{padding:14px 16px 10px}.picker-body{padding:14px 16px}.picked{padding:12px 16px}
+    .venues{grid-template-columns:1fr;gap:0}
+    .venue{display:grid;grid-template-columns:88px 1fr;column-gap:12px;padding:10px 0;border-bottom:1px solid var(--line-soft);border-radius:0}
+    .venue .img{grid-row:1/4;aspect-ratio:1;border-radius:var(--r)}.venue:hover .img{transform:none}
+    .venue .est{right:4px;bottom:4px;padding:2px 5px;font-size:.65rem}.venue .prev{left:4px;top:4px;padding:2px 6px;font-size:.65rem}
+    .venue b{margin-top:0;font-size:.95rem}.venue .d{white-space:normal;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical}
+    .venue .m{flex-wrap:wrap;row-gap:0}
+    .vd-hero{height:140px}.picked .row>div{min-width:46%}.picked{padding:10px 12px}.venue b{font-size:.88rem}.venue .m{flex-wrap:wrap}
+    .row>div{min-width:100px}
+  }
+.tagx{border:none;background:none;color:#999;font-size:14px;line-height:1;padding:0 0 0 2px;cursor:pointer;vertical-align:middle}.tagx:hover{color:var(--red,#e0453a)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">malica<small id="groupName">skupinsko naročanje</small></div>
+  <div class="grow"></div>
+  <button class="chip" id="helpBtn" title="Kako deluje">?</button>
+  <button class="chip" id="locBtn" title="Lokacija pisarne">📍 <span id="locLabel">…</span></button>
+  <div class="chip">👤 <select id="meSelect"></select></div>
+</header>
+<div class="days" id="days"></div>
+<main id="main"></main>
+<footer class="foot-note">Developed by <b>Žiga Komac</b></footer>
+<div id="modalRoot"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s, r=document) => r.querySelector(s);
+const fmt = n => (Math.round((+n||0)*100)/100).toFixed(2).replace('.', ',') + ' €';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DN = ['ned','pon','tor','sre','čet','pet','sob'];
+const dateSl = iso => { if(!iso) return ''; const d = new Date(iso+'T00:00'); return `${DN[d.getDay()]}, ${d.getDate()}. ${d.getMonth()+1}.`; };
+const dateLong = iso => { if(!iso) return ''; const d = new Date(iso+'T00:00'); return `${['nedelja','ponedeljek','torek','sreda','četrtek','petek','sobota'][d.getDay()]}, ${d.getDate()}. ${d.getMonth()+1}. ${d.getFullYear()}`; };
+const relDay = iso => { const t=new Date(todayIso()+'T00:00'), d=new Date(iso+'T00:00'); const n=Math.round((d-t)/86400000); return n===0?'Danes':n===1?'Jutri':n===-1?'Včeraj':''; };
+const norm = t => String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const subseq = (q, t) => { let i=0; for(const ch of t){ if(ch===q[i]) i++; if(i===q.length) return true; } return q.length===0; };
+const matches = (q, text) => { const T=norm(text); return norm(q).split(/\s+/).filter(Boolean).every(w => T.includes(w) || (w.length>=4 && T.split(/[^a-z0-9]+/).some(tw => tw.length>=w.length-1 && subseq(w,tw)))); };
+const img = (u, w=400) => u ? (u.includes('imageproxy.wolt.com') ? `${u}${u.includes('?')?'&':'?'}w=${w}` : u) : '';
+const plural = (n, one, two, few, many) => n%100===1?one:n%100===2?two:(n%100===3||n%100===4)?few:many;
+const nOrders = n => `${n} ${plural(n,'naročilo','naročili','naročila','naročil')}`;
+const deadlinePassed = d => { const m=/^(\d{1,2}):(\d{2})$/.exec(d.deadline||''); if(!m||!d.date) return false; const due=new Date(d.date+'T00:00'); due.setHours(+m[1],+m[2],0,0); return Date.now()>=due.getTime(); };
+const serverToday = () => state.today || todayIso();
+const isToday = d => d.date===serverToday();
+const canOrder = d => d.status==='open' && isToday(d) && !deadlinePassed(d);
+const defaultDeadline = (iso) => { if(iso && iso!==todayIso()) return '11:00'; const n=new Date(); if(n.getHours()<11) return '11:00'; const t=new Date(n.getTime()+60*60000); t.setMinutes(t.getMinutes()<30?30:0); if(t.getMinutes()===0) t.setHours(t.getHours()+1); return `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`; };
+const todayIso = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+
+let state = {people:[], days:[], location:{label:''}};
+let currentDayId = localStorage.getItem('wolt.day') || null;
+let me = localStorage.getItem('wolt.me') || '';
+let tab = 'menu';
+const menus = {};        // slug -> menu
+let venuesCache = null;  // {venues, filters}
+
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+async function api(path, body, quiet=false){
+  const r = await fetch(path, body ? {method:'POST', headers:{'Content-Type':'application/json', 'X-Who': encodeURIComponent(me||'')}, body: JSON.stringify(body)} : undefined);
+  if(r.status===401){ location.reload(); throw new Error('PIN'); }
+  const j = await r.json().catch(()=>({error:'Napaka strežnika'}));
+  if(!r.ok){ if(!quiet) toast(j.error || 'Napaka'); throw new Error(j.error); }
+  return j;
+}
+let firstLoad = true, seq = 0, lastJson = '';
+let extReady = false; const extPending = {};
+window.addEventListener('message', ev=>{ if(ev.source!==window || !ev.data || !ev.data.malicaWolt) return;
+  if(ev.data.malicaWolt==='ready'){ if(!extReady){ extReady=true; render(); if(new URLSearchParams(location.search).get('ext')==='installed'){ toast('✓ Razširitev Malica ↔ Wolt je nameščena'); history.replaceState(null,'',location.pathname); } } }
+  if(ev.data.malicaWolt==='response' && extPending[ev.data.id]){ extPending[ev.data.id](ev.data.result); delete extPending[ev.data.id]; } });
+const extCall = payload => new Promise(res=>{ const id=Math.random().toString(36).slice(2); extPending[id]=res; window.postMessage({malicaWolt:'request', id, payload}, location.origin); setTimeout(()=>{ if(extPending[id]){ delete extPending[id]; res({error:'Razširitev se ne odziva — osveži stran'}); } }, 60000); });
+async function refresh(){ try{ const my = ++seq; const fresh = await api('/api/state', null, true); if(my !== seq) return; // medtem je bil mutate
+  const js = JSON.stringify(fresh); if(js === lastJson && !firstLoad) return; lastJson = js; state = fresh;
+  if(me && !state.people.includes(me)){ me=''; localStorage.removeItem('wolt.me'); }
+  if(firstLoad){ firstLoad=false; const t = state.days.find(d=>d.date===todayIso()); if(t) currentDayId=t.id; if(curDay()?.status==='ordered') tab='split'; if(!me) welcomeModal(); }
+  if(!venuesCache && !window.__prefetch){ window.__prefetch=true; setTimeout(()=>{ try{ const c=JSON.parse(sessionStorage.getItem('venues')||'null'); if(c && c.loc===state.location.label && Date.now()-c.t<600000){ venuesCache=c.data; return; } }catch(e){} api('/api/wolt/venues', null, true).then(d=>{ venuesCache=d; try{ sessionStorage.setItem('venues', JSON.stringify({t:Date.now(), loc:state.location.label, data:d})); }catch(e){} }).catch(()=>{}); }, 800); }
+  render(); }catch(e){} }
+async function mutate(path, body){ const r = await api(path, body); ++seq; state = r; lastJson = JSON.stringify(r); render(); return state; }
+function curDay(){ return state.days.find(d=>d.id===currentDayId); }
+
+async function loadMenu(slug){
+  if(menus[slug]) return menus[slug];
+  const m = await api('/api/wolt/menu?slug='+encodeURIComponent(slug));
+  menus[slug] = m; return m;
+}
+
+// ---------- obračun ----------
+function calc(day){
+  const f = day.fees || {};
+  const per = {};
+  for(const o of day.orders) per[o.person] = (per[o.person]||0) + o.price*o.qty;
+  const people = Object.keys(per);
+  const subtotal = people.reduce((a,p)=>a+per[p],0);
+  // če je vpisan skupni znesek naročila, je doplačilo razlika do jedi; sicer stare postavke
+  const extra = (day.grandTotal!=null && +day.grandTotal>0) ? Math.round((+day.grandTotal - subtotal)*100)/100
+    : (+f.delivery||0) + (+f.service||0) + (+f.tip||0) - (+f.discount||0);
+  const rows = people.map(p=>{
+    const raw = !people.length ? 0 : (day.feeSplit!=='equal' && subtotal>0 ? extra*per[p]/subtotal : extra/people.length);
+    return {person:p, items:per[p], share: Math.round(raw*100)/100};
+  }).sort((a,b)=>a.person.localeCompare(b.person));
+  if(rows.length){ const diff = Math.round((extra - rows.reduce((a,r)=>a+r.share,0))*100)/100; const tgt = rows.find(r=>r.person===day.payer) || rows[rows.length-1]; tgt.share = Math.round((tgt.share+diff)*100)/100; }
+  for(const r of rows) r.total = Math.round((r.items + r.share)*100)/100;
+  return {rows, subtotal, extra, total: subtotal+extra};
+}
+
+// ---------- render ----------
+const orderRoute = () => { const m = location.pathname.match(/^\/o(?:rder)?\/([a-z0-9]+)/i); return m ? m[1] : null; };
+
+function render(){
+  const oid = orderRoute();
+  if(oid){ renderOrderMode(oid); return; }
+  $('#locLabel').textContent = state.location?.label || 'Lokacija';
+  $('#meSelect').innerHTML = '<option value="">Kdo si?</option>' + state.people.map(p=>`<option ${p===me?'selected':''}>${esc(p)}</option>`).join('') + '<option value="__switch">⇄ Nisem jaz — zamenjaj</option>' + (state.admin?'<option value="__admin">🛠 Admin</option>':'') + '<option value="__logout">⎋ Odjava iz skupine</option>';
+  if(state.group) $('#groupName').textContent = state.group.name;
+
+  const T = todayIso();
+  const grp = d => d.date===T ? 0 : d.date>T ? 1 : 2;
+  // v vrstici samo današnji + prihodnji predlogi; pretekli dnevi gredo v Zgodovino
+  let days = [...state.days].filter(d=>grp(d)!==2).sort((a,b)=> grp(a)-grp(b) || a.date.localeCompare(b.date));
+  const pastCount = state.days.filter(d=>grp(d)===2).length;
+  if(!currentDayId || !state.days.find(d=>d.id===currentDayId)) currentDayId = days[0]?.id || state.days[0]?.id || null;
+  const chip = d => `<div class="day g${grp(d)} ${d.id===currentDayId?'active':''}" data-day="${d.id}">
+      <button class="delchip" data-delday="${d.id}" title="Izbriši dan">×</button><em class="tag-g g${grp(d)}">${grp(d)===0?'Danes':(relDay(d.date)||'Prihodnje')}</em><b>${esc(d.restaurant)}</b><span><i class="st ${d.status}"></i>${dateSl(d.date)} · ${nOrders(d.orders.length)}</span></div>`;
+  const todays = days.filter(d=>grp(d)===0), future = days.filter(d=>grp(d)===1);
+  $('#days').innerHTML = `<div class="day add" data-new><b>+ Predlagaj</b><span>za danes, ${dateSl(todayIso())}</span></div>` + todays.map(chip).join('')
+      + (pastCount?`<div class="day hist" data-act="history"><b>🕘 Zgodovina</b><span>${pastCount} ${plural(pastCount,'dan','dneva','dnevi','dni')}</span></div>`:'')
+      + (future.length?`<div class="future"><div class="future-label">📅 Prihodnji predlogi</div><div class="future-list">${future.map(chip).join('')}</div></div>`:'');
+
+  const day = curDay();
+  const todayDay = state.days.find(d=>d.date===todayIso());
+  const banner = todayDay || !state.days.length ? '' : `<div class="banner"><div><b>Danes, ${dateSl(todayIso()).replace(/^[^,]+, /,'')} še ni predloga.</b><div class="sub">Kdo predlaga, kam?</div></div><button class="btn primary" data-new>🍽 Kam gremo danes? Predlagaj restavracijo</button></div>`;
+  $('#main').innerHTML = banner + (day ? renderDay(day) : `<div class="empty"><h2>Za danes še nihče ni nič predlagal</h2><p>Izberi restavracijo na Woltu, sodelavci si izberejo jedi, eden naroči.</p><button class="btn primary" data-new>🍽 Kam gremo danes? Predlagaj restavracijo</button></div>`);
+  if(day && tab==='menu' && day.venue?.slug) renderMenu(day);
+  if(day && tab==='summary' && $('#woltStatus')) extCall({type:'status'}).then(st=>{ const el=$('#woltStatus'); if(!el) return;
+    el.innerHTML = st.woltLoggedIn ? '✓ Prijava na wolt.com zaznana' : `⚠ Nisi prijavljen na wolt.com. <a href="https://wolt.com/sl/login" target="_blank" rel="noopener">Prijavi se ↗</a> in potem klikni gumb.`; });
+  if(day && tab==='summary'){ const cv=$('#orderQR'); if(cv && window.QR && matchMedia('(min-width:641px)').matches){ try{ QR.toCanvas(cv, cv.dataset.url, {scale:5, border:2}); }catch(e){} } }
+}
+
+function renderDay(day){
+  const v = day.venue || {};
+  const open = canOrder(day);
+  const late = day.status==='open' && isToday(day) && deadlinePassed(day);
+  const future = day.status==='open' && day.date>serverToday();
+  const past = day.status==='open' && day.date<serverToday();
+  const c = calc(day);
+  let html = `<div class="venue-block ${day.status==='ordered'?'done':''}"><div class="hero" style="${v.image?`background-image:url('${esc(img(v.image,1200))}')`:''}"></div>
+  <div class="venue-head">
+    <div style="min-width:0">
+      <h1>${esc(day.restaurant)}</h1>
+      <div class="meta">
+        <span class="status ${day.status} ${late?'late':''}">${day.status==='ordered'?'✓ Naročeno':late?'⏰ Rok potekel':future?'📅 Predlog':past?'Preteklo':'● Odprto'}</span>
+        <span>${dateLong(day.date)}</span>
+        ${day.deadline?`<span>⏰ ${esc(day.deadline)}</span>`:''}
+        ${v.rating?`<span>⭐ ${v.rating}</span>`:''}
+        ${v.estimate?`<span>🛵 ${esc(v.estimate)}′</span>`:''}
+        ${(v.url||day.url)?`<a href="${esc(v.url||day.url)}" target="_blank" rel="noopener">Wolt ↗</a>`:''}
+      </div>
+      <div class="meta orderer-row"><span>🛵 Naroča:</span>
+        <select class="inline-sel" data-orderer ${!open?'disabled':''}><option value="">— kdo naroča? —</option>${state.people.map(p=>`<option ${day.orderer===p?'selected':''}>${esc(p)}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="dd"><button class="btn" data-act="daymenu">Naročilo ▾</button>
+        <div class="dd-menu" id="dayMenu">
+          <div class="dd-head"><b>${esc(day.restaurant)}</b><span class="sub">${nOrders(day.orders.length)} · ${open?'odprto':'zaključeno'}${day.orderer?` · naroča ${esc(day.orderer)}`:''}</span></div>
+          ${open && extReady && me && me===day.orderer && day.orders.length ? `<div class="dd-label">Z razširitvijo Malica ↔ Wolt</div>
+          <button data-act="woltpush-go"><i>🛒</i><span>Prenesi jedi v Wolt košarico<small>odpre Wolt s polno košarico</small></span></button>
+          <button data-act="wolttotal-go"><i>💶</i><span>Preberi plačani znesek in zaključi<small>iz Woltove zgodovine naročil</small></span></button>
+          <div class="dd-sep"></div>`:''}
+          ${open ? `<button data-act="finish" ${!day.orders.length?'disabled':''}><i>✓</i><span>Zaključi naročilo<small>sam vpišeš, koliko si plačal</small></span></button>`
+                 : `<button data-act="status" data-v="open"><i>↩</i><span>Ponovno odpri naročilo<small>dovoli spremembe naročil</small></span></button><button data-act="edit-fees"><i>💶</i><span>Uredi stroške naročila<small>znesek, plačnik, delitev</small></span></button>`}
+          <button data-act="editday"><i>✎</i><span>Uredi dan<small>restavracija, rok, kdo naroča</small></span></button>
+          <div class="dd-sep"></div>
+          <button class="danger" data-delday="${day.id}"><i>🗑</i><span>Izbriši restavracijo in vsa naročila<small>${day.orders.length?`izbriše ${nOrders(day.orders.length)} — ni mogoče razveljaviti`:'brez naročil'}</small></span></button>
+        </div></div>
+    </div>
+  </div></div>
+  <div class="tabs">
+    <button class="${tab==='menu'?'active':''}" data-tab="menu">Meni</button>
+    <button class="${tab==='orders'?'active':''}" data-tab="orders">Naročila<span class="n">${day.orders.length}</span></button>
+    <button class="${tab==='summary'?'active':''}" data-tab="summary">Povzetek za Wolt</button>
+    <button class="${tab==='split'?'active':''}" data-tab="split">Obračun</button>
+  </div>`;
+
+  if(tab==='menu'){
+    html += `<div class="menu-layout">` + (v.slug ? `<div id="menu"><div class="spinner">Nalagam meni z Wolta…</div></div>`
+      : `<div class="empty">Ta dan nima povezane Wolt restavracije.${canOrder(day)?'<br><button class="btn primary" style="margin-top:12px" data-act="manual">+ Ročni vnos naročila</button>':''}</div>`)
+      + renderCart(day) + `</div>` + `<div class="cartbar" data-act="cart"><span>🛒 ${nOrders(day.orders.length)}</span><span>${fmt(c.subtotal)} ›</span></div>`;
+  }
+
+  if(tab==='orders'){
+    const byPerson = {};
+    for(const o of day.orders) (byPerson[o.person] ||= []).push(o);
+    const persons = Object.keys(byPerson).sort((a,b)=> (a===me?-1:b===me?1:a.localeCompare(b)));
+    html += `<div class="table-wrap"><table><thead><tr><th>Kdo</th><th>Jed</th><th class="num">Kol.</th><th class="num">Cena</th><th class="num">Skupaj</th><th></th></tr></thead><tbody>`;
+    for(const p of persons) for(const o of byPerson[p]){
+      html += `<tr class="${p===me?'mine':''}"><td><b>${esc(p)}</b></td><td>${esc(o.item)}${o.options?`<div class="sub">${esc(o.options)}</div>`:''}${o.note?`<div class="sub">✎ ${esc(o.note)}</div>`:''}</td>
+        <td class="num">${o.qty}</td><td class="num">${fmt(o.price)}</td><td class="num"><b>${fmt(o.price*o.qty)}</b></td>
+        <td class="num">${open?`<button class="icon" data-edit="${o.id}" title="Uredi">✎</button> <button class="icon" data-delorder="${o.id}" title="Izbriši">×</button>`:''}</td></tr>`;
+    }
+    if(!day.orders.length) html += `<tr><td colspan="6" class="sub">Še ni naročil — izberi si kaj iz menija.</td></tr>`;
+    html += `<tr class="total"><td colspan="4">Jedi skupaj</td><td class="num">${fmt(c.subtotal)}</td><td></td></tr>${c.extra?`<tr class="total"><td colspan="4">Doplačilo (dostava ipd.)</td><td class="num">${fmt(c.extra)}</td><td></td></tr><tr class="total"><td colspan="4"><b>Skupaj plačano na Woltu</b></td><td class="num"><b>${fmt(c.total)}</b></td><td></td></tr>`:''}</tbody></table></div>
+      <div style="margin-top:14px"><button class="btn" data-act="manual" ${!open?'disabled':''}>+ Ročni vnos (jed, ki je ni v meniju)</button></div>`;
+  }
+
+  if(tab==='summary'){
+    const items = {};
+    for(const o of day.orders){ const k=o.item+(o.options?' — '+o.options:'')+(o.note?' ('+o.note+')':''); items[k] = items[k]||{qty:0, who:[], itemId:o.itemId}; items[k].qty+=o.qty; items[k].who.push(o.person+(o.qty>1?' ×'+o.qty:'')); }
+    let txt = `${day.restaurant} — ${dateLong(day.date)}\n\n`;
+    for(const [k,v] of Object.entries(items)) txt += `${v.qty}× ${k}   [${v.who.join(', ')}]\n`;
+    txt += `\nSkupaj jedi: ${fmt(c.subtotal)}`;
+    const itemUrl = id => v.url && id ? `${v.url}/itemid-${id}` : '';
+    const checklist = Object.entries(items).map(([k,x])=>`<label class="chk"><input type="checkbox"><span class="q">${x.qty}×</span><span class="nm">${esc(k)}<div class="sub">${esc(x.who.join(', '))}</div></span>${itemUrl(x.itemId)?`<a class="btn sm ghost" href="${esc(itemUrl(x.itemId))}" target="_blank" rel="noopener">Odpri na Woltu ↗</a>`:''}</label>`).join('');
+    html += `<p class="sub">Seznam za ${day.orderer?`<b>${esc(day.orderer)}</b>, ki naroča`:'tistega, ki naroča'} — enake jedi z enakimi dodatki so združene.</p>
+      ${v.id && day.orders.length && me && me===day.orderer && extReady ? `<div class="card" id="woltPush"><h3>🛒 Prenesi jedi v Wolt košarico</h3>
+        <p class="sub" style="margin:-6px 0 10px">Odpre se Wolt in v <b>tvoji</b> košarici so že vse jedi z dodatki (uporabi tvojo prijavo na wolt.com). Nič se ne shranjuje, plačaš sam na Woltu.</p>
+        <div id="woltStatus" class="sub" style="margin-bottom:8px">Preverjam prijavo na Woltu…</div>
+        <button class="btn primary" id="woltPushBtn" data-act="woltpush">🛒 Prenesi ${nOrders(day.orders.length)} v Wolt košarico</button><div id="woltPushResult" style="margin-top:10px"></div>
+        ${day.status==='open'?`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><div class="sub" style="margin-bottom:8px">Ko na Woltu plačaš, lahko končni znesek potegneš kar iz Woltove zgodovine naročil.</div><button class="btn" id="woltTotalBtn" data-act="wolttotal">💶 Preberi plačani znesek z Wolta in zaključi</button><div id="woltTotalResult" style="margin-top:8px"></div></div>`:''}</div>`:''}
+      ${v.id && day.orders.length ? `<div class="card"><h3>📱 Naročam s telefona</h3>
+        <div class="os-qr"><canvas id="orderQR" data-url="${location.origin}/o/${day.id}"></canvas><div class="sub">Skeniraj s telefonom in jedi po vrsti dodaj v Wolt košarico.</div></div>
+        <a class="btn primary os-mobilebtn" href="/o/${day.id}">📱 Odpri seznam za naročanje</a></div>`:''}
+      ${checklist?`<div class="card"><h3>Seznam za vnos v Wolt</h3><p class="sub" style="margin:-6px 0 10px">Povezava odpre jed na Woltu — izberi dodatke in jo daj v košarico. Odkljukaj, kar si že dodal.</p>${checklist}</div>`:''}
+      <details><summary class="sub" style="cursor:pointer">Povzetek kot besedilo (za kopiranje v chat)</summary><pre class="summary" id="summaryText" style="margin-top:10px">${esc(txt)}</pre>
+      <button class="btn" data-act="copy">📋 Kopiraj</button></details>
+      ${v.url?`<p><a class="btn ghost" href="${esc(v.url)}" target="_blank" rel="noopener">Odpri restavracijo na Woltu ↗</a></p>`:''}`;
+  }
+
+  if(tab==='split'){
+    const payer = day.payer;
+    const myRow = c.rows.find(r=>r.person===me);
+    const others = c.rows.filter(r=>r.person!==payer);        // vsi razen plačnika
+    const unpaid = others.filter(r=>!day.paid.includes(r.person));
+    if(day.status==='open'){
+      html += `<div class="banner"><div><b>Naročilo še ni zaključeno.</b><div class="sub">Ko ${day.orderer?`<b>${esc(day.orderer)}</b>`:'tisti, ki naroča,'} odda naročilo na Woltu, klikne <b>Zaključi naročilo</b> in vpiše, koliko je plačal.</div></div>${day.orders.length?`<button class="btn primary" data-act="finish">Zaključi naročilo</button>`:''}</div>`;
+    } else if(payer && myRow && me!==payer){
+      const paid = day.paid.includes(me);
+      html += `<div class="banner ${paid?'ok':''}"><div><b>${paid?`Poravnano ✓`:`Dolguješ ${fmt(myRow.total)}`}</b><div class="sub">${paid?`Svoj delež si že nakazal/a osebi ${esc(payer)}.`:`Nakaži osebi <b>${esc(payer)}</b> ${fmt(myRow.total)}.`}</div></div><button class="btn ${paid?'':'primary'}" data-paid-toggle="${esc(me)}">${paid?'Označi kot neporavnano':'✓ Sem nakazal/a'}</button></div>`;
+    } else if(payer && me===payer && others.length){
+      html += `<div class="banner ${unpaid.length?'':'ok'}"><div><b>${unpaid.length?`Čakaš še ${fmt(unpaid.reduce((a,r)=>a+r.total,0))}`:'Vsi so poravnali 🎉'}</b><div class="sub">${unpaid.length?'Odkljukaj spodaj, ko ti kdo nakaže. '+unpaid.map(r=>`${esc(r.person)} ${fmt(r.total)}`).join(' · '):'Vsi so poravnali. 🎉'}</div></div></div>`;
+    }
+    html += `<div class="card"><div class="meta"><span>Jedi <b>${fmt(c.subtotal)}</b></span>${c.extra?`<span>Doplačilo <b>${fmt(c.extra)}</b></span>`:''}<span>Skupaj <b>${fmt(c.total)}</b></span>${payer?`<span>Plačal/a: <b>${esc(payer)}</b></span>`:''}${day.status==='ordered'?`<button class="btn sm" style="margin-left:auto" data-act="edit-fees">Uredi znesek</button>`:''}</div></div>`;
+    if(others.length){
+      html += `<h3 style="margin:18px 0 8px">Kdo koliko nakaže</h3>
+        <p class="sub" style="margin:-6px 0 10px">Vsak odkljuka, ko ${esc(payer||'plačniku')} nakaže svoj delež (ročno, aplikacija ne preverja nakazil).</p>
+        <div class="table-wrap"><table><thead><tr><th>Oseba</th>${c.extra?`<th class="num">Jedi</th><th class="num">Doplačilo</th>`:''}<th class="num">Nakaže</th><th>Poravnano</th></tr></thead><tbody>`;
+      for(const r of c.rows){
+        const isPayer = r.person===payer;
+        const paid = isPayer || day.paid.includes(r.person);
+        html += `<tr class="${paid&&!isPayer?'paid':''} ${r.person===me?'mine':''}"><td><b>${esc(r.person)}</b>${isPayer?'<span class="pill-badge">plačnik</span>':''}</td>${c.extra?`<td class="num sub">${fmt(r.items)}</td><td class="num sub">${fmt(r.share)}</td>`:''}<td class="num">${isPayer?'<span class="sub">—</span>':`<b>${fmt(r.total)}</b>`}</td>
+          <td>${isPayer?'<span class="sub">—</span>':`<input type="checkbox" data-paid="${esc(r.person)}" ${paid?'checked':''} ${day.status!=='ordered'?'disabled':''} style="width:20px;height:20px;accent-color:var(--blue)">`}</td></tr>`;
+      }
+      html += `</tbody></table></div>`;
+    } else {
+      html += `<p class="sub" style="margin-top:12px">Samo eno naročilo (${esc(payer||day.orders[0]?.person||'')}) — ni deljenja.</p>`;
+    }
+  }
+  return html;
+}
+
+function cartModal(day){
+  const c = calc(day);
+  const by = {};
+  for(const o of day.orders) (by[o.person] ||= []).push(o);
+  const persons = Object.keys(by).sort((a,b)=> (a===me?-1:b===me?1:a.localeCompare(b)));
+  let h = `<div class="body"><h2>🛒 Naročilo skupine</h2><p class="desc">${esc(day.restaurant)} · ${nOrders(day.orders.length)}</p>`;
+  if(!day.orders.length) h += `<p class="sub">Še nihče ni nič izbral.</p>`;
+  for(const p of persons){
+    h += `<div class="person ${p===me?'me':''}" style="margin:12px 0 4px;font-size:.8rem;font-weight:700;color:${p===me?'var(--blue)':'var(--ink-2)'};text-transform:uppercase;letter-spacing:.04em">${p===me?'Moje naročilo':esc(p)}</div>`;
+    for(const o of by[p]) h += `<div class="line" style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line-soft)"><span style="flex:0 0 26px;color:var(--ink-2)">${o.qty}×</span><span style="flex:1;min-width:0">${esc(o.item)}${o.options?`<div class="sub">${esc(o.options)}</div>`:''}${o.note?`<div class="sub">✎ ${esc(o.note)}</div>`:''}</span><span class="sub" style="white-space:nowrap">${fmt(o.price*o.qty)}</span>${canOrder(day)?`<button class="icon" data-cartdel="${o.id}" title="Odstrani" style="flex:0 0 auto">🗑</button>`:''}</div>`;
+  }
+  h += `<div style="display:flex;justify-content:space-between;font-weight:700;padding-top:12px"><span>Skupaj</span><span>${fmt(c.subtotal)}</span></div></div>
+    <div class="foot">${canOrder(day)?`<button class="btn" data-act="manual">+ Ročni vnos</button>`:''}<button class="btn primary" data-tab="summary" style="flex:1">Povzetek za Wolt ›</button></div>`;
+  const modal = openModal(h);
+  modal.addEventListener('click', async e=>{
+    if(e.target.closest('[data-tab],[data-act]')){ closeModal(); return; }
+    const d = e.target.closest('[data-cartdel]'); if(!d) return;
+    const o = day.orders.find(x=>x.id===d.dataset.cartdel);
+    if(o && (o.person===me || confirm(`Odstranim naročilo (${o.person}: ${o.item})?`))){
+      await mutate(`/api/days/${day.id}/orders-delete`,{id:d.dataset.cartdel}); toast('Odstranjeno');
+      const nd = curDay(); if(nd && nd.orders.length){ cartModal(nd); } else { closeModal(); }
+    }
+  });
+}
+
+function renderCart(day){
+  const c = calc(day);
+  const by = {};
+  for(const o of day.orders) (by[o.person] ||= []).push(o);
+  const persons = Object.keys(by).sort((a,b)=> (a===me?-1:b===me?1:a.localeCompare(b)));
+  let h = `<aside class="cart" id="cart"><h3>🛒 Naročilo skupine<span class="n">${day.orders.length} ${plural(day.orders.length,'jed','jedi','jedi','jedi')}</span></h3>`;
+  if(!day.orders.length) h += `<div class="hint">Še nihče ni nič izbral. Klikni jed v meniju — tukaj bo tvoje naročilo in naročila sodelavcev.</div>`;
+  for(const p of persons){
+    h += `<div class="person ${p===me?'me':''}">${p===me?'Moje naročilo':esc(p)}</div>`;
+    for(const o of by[p]) h += `<div class="line"><span class="q">${o.qty}×</span><span class="nm">${esc(o.item)}${o.options?`<div class="sub">${esc(o.options)}</div>`:''}${o.note?`<div class="sub">✎ ${esc(o.note)}</div>`:''}</span><span class="pr">${fmt(o.price*o.qty)}</span>${canOrder(day)?`<button class="x" data-delorder="${o.id}" title="Odstrani">×</button>`:''}</div>`;
+  }
+  h += `<div class="tot"><span>Skupaj</span><span>${fmt(c.subtotal)}</span></div>
+    <div class="cta">${canOrder(day)?`<button class="btn" data-act="manual">+ Ročni vnos</button>`:''}<button class="btn ghost" data-tab="summary">Povzetek za Wolt ›</button></div></aside>`;
+  return h;
+}
+
+async function renderMenu(day){
+  const slug = day.venue.slug;
+  let m;
+  try{ m = await loadMenu(slug); }catch(e){ const el=$('#menu'); if(el) el.innerHTML=`<div class="empty">Menija ni šlo naložiti.<br><span class="sub">${esc(e.message)}</span><br><button class="btn" style="margin-top:12px" data-act="manual">+ Ročni vnos</button></div>`; return; }
+  const el = $('#menu'); if(!el || curDay()?.id!==day.id) return;
+  const open = day.status==='open';
+  let html = `<div class="cats">${m.categories.map(c=>`<a data-scroll="cat-${c.id}">${esc(c.name)}</a>`).join('')}</div>`;
+  if(!open) html += `<p class="sub">${late?`Rok za naročila (${esc(day.deadline)}) je potekel — kdor naroča, ga lahko podaljša v „Uredi dan“.`:future?`To je predlog za ${dateLong(day.date)}. Meni si lahko ogledaš, naročanje se odpre na ta dan.`:past?'Ta dan je mimo.':'Naročilo je že oddano. Če hočeš kaj dodati, ga najprej ponovno odpri (Naročilo ▾).'}</p>`;
+  for(const c of m.categories){
+    html += `<h2 class="cat" id="cat-${c.id}">${esc(c.name)}</h2><div class="items">`;
+    for(const it of c.items){
+      html += `<div class="item ${it.disabled||!open?'off':''}" data-item="${it.id}" data-slug="${esc(slug)}">
+        <div class="t"><b>${esc(it.name)}</b><p>${esc(it.description)}</p><span class="p">${fmt(it.price)}</span></div>
+        ${it.image?`<img loading="lazy" decoding="async" src="${esc(img(it.image,200))}" alt="">`:''}
+        ${!it.disabled&&open?'<div class="plus">+</div>':''}</div>`;
+    }
+    html += `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ---------- modali ----------
+function openModal(html, wide=false){
+  if(!$('#modalRoot').children.length) history.pushState({modal:1}, '');
+  $('#modalRoot').innerHTML = `<div class="backdrop"><div class="modal ${wide?'wide':''}"><button class="icon close" data-close>✕</button>${html}</div></div>`;
+  return $('.modal');
+}
+function closeModal(){ if($('#modalRoot').children.length && history.state?.modal){ history.back(); } else { $('#modalRoot').innerHTML=''; } }
+window.addEventListener('popstate', ()=>{ $('#modalRoot').innerHTML=''; });
+
+function itemModal(it, existing){
+  const day = curDay();
+  let qty = existing?.qty || 1;
+  const body = `
+    ${it.image?`<img class="mimg" src="${esc(img(it.image,900))}" alt="">`:''}
+    <div class="body">
+      <h2>${esc(it.name)}</h2>
+      <p class="desc">${esc(it.description)} <b style="color:var(--ink)">${fmt(it.price)}</b></p>
+      <form id="itemForm">
+      ${(it.options||[]).map((o,oi)=>`<div class="opt"><h4>${esc(o.name)}</h4><div class="req">${o.min>0?'Obvezno':'Neobvezno'}${o.max>1?` · največ ${o.max}`:''}</div>
+        ${o.values.map((v,vi)=>`<label class="v"><input type="${o.max===1?'radio':'checkbox'}" name="opt${oi}" value="${vi}" data-price="${v.price}" ${o.max===1&&o.min>0&&vi===0?'checked':''}> ${esc(v.name)}<span class="pr">${v.price?'+ '+fmt(v.price):''}</span></label>`).join('')}</div>`).join('')}
+      <div class="opt"><label>Kdo naroča</label><select name="person">${state.people.map(p=>`<option ${(existing?.person||me)===p?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+      <div class="opt"><label>Opomba za restavracijo</label><input name="note" placeholder="npr. brez čebule" value="${esc(existing?.note||'')}"></div>
+      </form>
+    </div>
+    <div class="foot">
+      <div class="stepper"><button type="button" data-q="-1">−</button><span id="qty">${qty}</span><button type="button" data-q="1">+</button></div>
+      <button class="btn primary" id="addBtn">Dodaj v naročilo · <span id="tot"></span></button>
+    </div>`;
+  const modal = openModal(body);
+  const unit = () => it.price + [...document.querySelectorAll('#itemForm input:checked')].reduce((a,i)=>a+(+i.dataset.price||0),0);
+  const upd = () => { $('#qty').textContent=qty; $('#tot').textContent=fmt(unit()*qty); };
+  upd();
+  modal.addEventListener('change', upd);
+  modal.addEventListener('click', async e=>{
+    if(e.target.dataset.q){ qty=Math.max(1, qty+(+e.target.dataset.q)); upd(); }
+    if(e.target.closest('#addBtn')){
+      const btn = $('#addBtn'); if(btn.disabled) return; btn.disabled = true;
+      const f = $('#itemForm');
+      for(const [oi,o] of (it.options||[]).entries()){ const n=f.querySelectorAll(`[name=opt${oi}]:checked`).length; if(n<o.min){ btn.disabled=false; toast(`Izberi: ${o.name}`); f.querySelector(`[name=opt${oi}]`).closest('.opt').scrollIntoView({behavior:'smooth',block:'center'}); return; } if(n>o.max){ btn.disabled=false; toast(`${o.name}: največ ${o.max}`); return; } }
+      const person = f.person.value; if(!person){ btn.disabled=false; toast('Najprej zgoraj izberi, kdo si'); return; }
+      const chosen = [...f.querySelectorAll('input:checked')].map(i=>{ const o=it.options[+i.name.slice(3)]; return o.values[+i.value].name.trim(); }).filter(n=>!/^ne,?\s*hvala/i.test(n)).join(', ');
+      const optsById = {}; for(const i of f.querySelectorAll('input:checked')){ const o=it.options[+i.name.slice(3)]; const v=o.values[+i.value]; (optsById[o.id] ||= {id:o.id, values:[]}).values.push({id:v.id, price:v.price}); }
+      try{ await mutate(`/api/days/${day.id}/orders`, {id: existing?.id, person, item: it.name, itemId: it.id, price: unit(), basePrice: it.price, opts: Object.values(optsById), qty, note: f.note.value, options: chosen}); }
+      catch(err){ btn.disabled=false; return; }
+      closeModal(); toast(`✓ ${it.name} dodano`); flashCart();
+    }
+  });
+}
+
+function finishModal(day){
+  const c0 = calc(day); const f = day.fees; const people = [...new Set(day.orders.map(o=>o.person))];
+  const payer0 = day.payer || day.orderer || me;
+  const modal = openModal(`<div class="body">
+    <h2>${day.status==='open'?'Zaključi naročilo':'Stroški naročila'}</h2>
+    <p class="desc">${esc(day.restaurant)} · ${day.orders.length} ${plural(day.orders.length,'jed','jedi','jedi','jedi')} · ${fmt(c0.subtotal)} · ${people.length} ${plural(people.length,'oseba','osebi','osebe','oseb')}</p>
+    <form id="finForm">
+      <div class="opt"><h4>Skupni znesek naročila</h4><div class="req">Vpiši, <b>koliko si dejansko plačal na Woltu</b> (z dostavo in vsemi stroški). Razliko do cene jedi razdelimo med vse.</div>
+        <div class="row" style="margin-top:8px"><div><label>Skupaj plačano na Woltu (€)</label><input name="grandTotal" type="number" step="0.01" inputmode="decimal" value="${day.grandTotal||''}" placeholder="${fmt(c0.subtotal).replace(' €','')}" style="font-size:1.2rem"></div></div>
+        <div class="sub" style="margin-top:6px">Jedi skupaj: ${fmt(c0.subtotal)}. Pusti prazno, če ni bilo nobenih dodatnih stroškov.</div></div>
+      <div class="opt"><div class="row">
+        <div><label>Plačal na Woltu</label><select name="payer">${state.people.map(p=>`<option ${payer0===p?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+        <div><label>Kako razdelimo doplačilo</label><select name="feeSplit"><option value="proportional" ${day.feeSplit!=='equal'?'selected':''}>sorazmerno (kdor ima dražje, plača več)</option><option value="equal" ${day.feeSplit==='equal'?'selected':''}>enako na osebo</option></select></div>
+      </div></div>
+      <div class="opt"><h4>Predogled obračuna</h4><div id="finPreview"></div></div>
+    </form></div>
+    <div class="foot"><button class="btn primary" id="finSave">${day.status==='open'?'Zaključi in pokaži obračun':'Shrani'}</button></div>`);
+  const read = () => { const d = Object.fromEntries(new FormData($('#finForm'))); return {...day, grandTotal:+d.grandTotal||0, feeSplit:d.feeSplit, payer:d.payer}; };
+  const preview = () => { const d = read(); const c = calc(d);
+    $('#finPreview').innerHTML = `<div class="table-wrap"><table><tbody>${c.rows.map(r=>`<tr><td>${esc(r.person)}${r.person===d.payer?'<span class="pill-badge">plačnik</span>':''}</td><td class="num sub">${fmt(r.items)}${c.extra?` + ${fmt(r.share)}`:''}</td><td class="num"><b>${fmt(r.total)}</b></td></tr>`).join('')}
+      <tr class="total"><td>Skupaj</td><td class="num sub">${c.extra?`doplačilo ${fmt(c.extra)}`:'brez doplačil'}</td><td class="num">${fmt(c.total)}</td></tr></tbody></table></div>`; };
+  preview();
+  modal.addEventListener('input', preview); modal.addEventListener('change', preview);
+  $('#finSave').addEventListener('click', async ()=>{
+    const d = read(); $('#finSave').disabled = true;
+    try{ await mutate(`/api/days/${day.id}`, {grandTotal:d.grandTotal, feeSplit:d.feeSplit, payer:d.payer, status:'ordered'}); }catch(e){ $('#finSave').disabled=false; return; }
+    closeModal(); tab='split'; render(); toast(day.status==='open'?'✓ Naročilo zaključeno':'✓ Shranjeno');
+  });
+}
+
+function flashCart(){ const c=$('#cart'); if(!c) return; c.classList.add('flash'); setTimeout(()=>c.classList.remove('flash'),1200); }
+
+function manualModal(existing){
+  const day = curDay();
+  openModal(`<div class="body"><h2>${existing?'Uredi naročilo':'Ročni vnos'}</h2><p class="desc">Za jedi, ki jih ni v meniju, ali popravek cene.</p>
+    <form id="manualForm">
+      <div class="opt"><label>Kdo</label><select name="person">${state.people.map(p=>`<option ${(existing?.person||me)===p?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+      <div class="opt"><label>Jed</label><input name="item" required value="${esc(existing?.item||'')}" placeholder="npr. Margherita"></div>
+      <div class="opt"><label>Dodatki</label><input name="options" value="${esc(existing?.options||'')}" placeholder="npr. velika, cheddar fries"></div>
+      <div class="opt row"><div><label>Cena na kos (€)</label><input name="price" type="number" step="0.01" min="0" required value="${existing?existing.price:''}"></div><div><label>Količina</label><input name="qty" type="number" min="1" value="${existing?.qty||1}"></div></div>
+      <div class="opt"><label>Opomba</label><input name="note" value="${esc(existing?.note||'')}"></div>
+    </form></div>
+    <div class="foot"><button class="btn primary" id="manualSave">Shrani</button></div>`);
+  $('#manualSave').addEventListener('click', async ()=>{
+    const f = $('#manualForm'); if(!f.reportValidity()) return;
+    const d = Object.fromEntries(new FormData(f));
+    await mutate(`/api/days/${day.id}/orders`, {...d, id: existing?.id, itemId: existing?.itemId||''});
+    closeModal(); toast('✓ Shranjeno'); flashCart();
+  });
+}
+
+async function pickerModal(){
+  openModal(`<div class="picker-head"><h2>Izberi restavracijo</h2>
+      <div class="search"><input id="vq" placeholder="Išči restavracijo ali vrsto hrane…" autofocus><button class="clr" id="vclr" hidden>✕</button></div>
+      <div class="filters" id="vf"></div></div>
+    <div class="picker-body" id="vb"><div class="spinner">Nalagam restavracije z Wolta za lokacijo „${esc(state.location.label)}“…</div></div>`, true);
+  let data;
+  try{
+    if(!venuesCache){ try{ const c=JSON.parse(sessionStorage.getItem('venues')||'null'); if(c && c.loc===state.location.label && Date.now()-c.t<600000) venuesCache=c.data; }catch(e){} }
+    if(!venuesCache){ venuesCache = await api('/api/wolt/venues'); try{ sessionStorage.setItem('venues', JSON.stringify({t:Date.now(), loc:state.location.label, data:venuesCache})); }catch(e){} }
+    data = venuesCache;
+    if(!$('#vb')) return; // uporabnik je medtem zaprl okno
+  }
+  catch(e){ const vb=$('#vb'); if(vb) vb.innerHTML=`<div class="empty">Restavracij ni šlo naložiti.<br><span class="sub">${esc(e.message)}</span></div>`; return; }
+  let q='', filter='', openOnly=false;
+  const prev = {}; // slug -> število dni, ko ste že naročali
+  for(const d of state.days) if(d.venue?.slug) prev[d.venue.slug] = (prev[d.venue.slug]||0)+1;
+  const byRating = (a,b) => (b.online-a.online) || ((b.rating||0)-(a.rating||0));
+
+  $('#vf').innerHTML = `<button class="${openOnly?'on':''}" data-open>🕐 Odprto zdaj</button><button class="on" data-f="">Vse</button>` + data.filters.map(f=>`<button data-f="${esc(f.id)}">${esc(f.name)}</button>`).join('');
+
+  const card = v => `<div class="venue" data-v="${esc(v.slug)}">
+      <div class="img">${v.image?`<img loading="lazy" decoding="async" src="${esc(img(v.image,400))}" alt="">`:''}${v.estimate?`<span class="est">${esc(v.estimate)} min</span>`:''}${!v.online?'<div class="off">Zaprto</div>':''}${prev[v.slug]?`<span class="prev">★ že ${prev[v.slug]}×</span>`:''}</div>
+      <b>${esc(v.name)}</b><div class="d">${esc(v.description||v.tags.join(', '))}</div>
+      <div class="m">${v.rating?`<span class="r">⭐ ${v.rating}</span>`:''}<span>${'€'.repeat(v.priceRange||1)}</span><span>${esc(v.tags.slice(0,3).join(' · '))}</span></div></div>`;
+
+  const list = () => {
+    const ok = v => (!openOnly || v.online) && (!filter || v.tags.includes(filter)) && (!q || matches(q, v.name) || matches(q, v.tags.join(' ')+' '+v.description));
+    const vs = data.venues.filter(ok).sort(byRating);
+    const fav = !q && !filter ? vs.filter(v=>prev[v.slug]).sort((a,b)=>prev[b.slug]-prev[a.slug]) : [];
+    let h = '';
+    if(fav.length) h += `<h3 class="sec">Tu ste že naročali</h3><div class="venues">${fav.map(card).join('')}</div>`;
+    h += `<h3 class="sec">${q||filter?'Zadetki':'Vse restavracije'} <span class="sub">${vs.length}</span></h3>`;
+    h += vs.length ? `<div class="venues">${vs.map(card).join('')}</div>` : `<div class="empty">Ni zadetkov${openOnly?' — poskusi izklopiti „Odprto zdaj“':''}.</div>`;
+    $('#vb').innerHTML = h; $('#vb').scrollTop = 0;
+  };
+  list();
+
+  const detail = async slug => {
+    const v = data.venues.find(x=>x.slug===slug);
+    const t = todayIso(); const rd = relDay(t);
+    $('#vb').innerHTML = `<div class="vd">
+      <button class="btn" data-back>‹ Nazaj na seznam</button>
+      <div class="vd-hero" style="${v.image?`background-image:url('${esc(img(v.image,900))}')`:''}"></div>
+      <h2>${esc(v.name)}</h2><div class="sub">${esc(v.description)}</div>
+      <div class="meta" style="margin:8px 0 14px">${v.rating?`<span class="rate">⭐ ${v.rating}${v.ratingVolume?` <span class="sub">(${v.ratingVolume})</span>`:''}</span>`:''}${v.estimate?`<span>🛵 ${esc(v.estimate)} min</span>`:''}${v.address?`<span>📍 ${esc(v.address)}</span>`:''}<span>${'€'.repeat(v.priceRange||1)}</span>${!v.online?'<span class="status">Trenutno zaprto</span>':''}<a href="${esc(v.url)}" target="_blank" rel="noopener">Wolt ↗</a></div>
+      <div id="vmenu"><div class="spinner">Nalagam meni…</div></div></div>`;
+    $('#vb').scrollTop = 0;
+    const picked = $('#picked'); picked.hidden = false;
+    picked.innerHTML = `<div class="row" style="width:100%">
+      <div style="flex:2;min-width:160px"><b>${esc(v.name)}</b><div class="sub">Predlagaj ta dan sodelavcem</div></div>
+      <div><label>Datum</label><input type="date" id="pDate" value="${t}"></div>
+      <div><label>Rok za naročila</label><input id="pDeadline" type="time" value="${defaultDeadline(t)}"></div>
+      <div><label>Na Woltu naroča</label><select id="pOrderer">${state.people.map(p=>`<option ${p===me?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+      <div class="auto"><button class="btn primary" id="pSave">Predlagaj${rd?' za '+rd.toLowerCase():''}</button></div></div>`;
+    $('#pDate').addEventListener('change', e=>{ const r=relDay(e.target.value); $('#pSave').textContent = 'Predlagaj' + (r?' za '+r.toLowerCase():' za '+dateSl(e.target.value)); $('#pDeadline').value = defaultDeadline(e.target.value); });
+    $('#pSave').addEventListener('click', async ()=>{
+      const dup = state.days.find(d=>d.date===$('#pDate').value);
+      if(dup && !confirm(`Za ${dateSl(dup.date)} že obstaja predlog: ${dup.restaurant}${dup.orders.length?` (${nOrders(dup.orders.length)})`:''}.
+
+Dodam še en predlog za isti dan?`)) return;
+      $('#pSave').disabled = true;
+      let s; try{ s = await mutate('/api/days', {date:$('#pDate').value, restaurant:v.name, url:v.url, deadline:$('#pDeadline').value, proposedBy:me, orderer:$('#pOrderer').value, venue:v}); }catch(e){ const b=$('#pSave'); if(b) b.disabled=false; return; }
+      currentDayId = s.days[s.days.length-1].id; localStorage.setItem('wolt.day', currentDayId); tab='menu'; closeModal(); render(); toast(`✓ ${v.name} predlagana`);
+    });
+    try{
+      const m = await loadMenu(slug); const el = $('#vmenu'); if(!el || !m) return;
+      el.innerHTML = `<div class="cats">${m.categories.map(c=>`<a data-scroll="pk-${c.id}">${esc(c.name)}</a>`).join('')}</div>` +
+        m.categories.map(c=>`<h2 class="cat" id="pk-${c.id}">${esc(c.name)}</h2><div class="items">${c.items.map(it=>`<div class="item ${it.disabled?'off':''}"><div class="t"><b>${esc(it.name)}</b><p>${esc(it.description)}</p><span class="p">${fmt(it.price)}</span></div>${it.image?`<img loading="lazy" decoding="async" src="${esc(img(it.image,200))}" alt="">`:''}</div>`).join('')}</div>`).join('');
+    }catch(e){ const el=$('#vmenu'); if(el) el.innerHTML=`<div class="empty">Menija ni šlo naložiti.</div>`; }
+  };
+
+  $('.modal').insertAdjacentHTML('beforeend', `<div class="picked" id="picked" hidden></div>`);
+  $('#vq').addEventListener('input', e=>{ q=e.target.value.trim(); $('#vclr').hidden=!q; list(); });
+  $('#vclr').addEventListener('click', ()=>{ q=''; $('#vq').value=''; $('#vclr').hidden=true; list(); $('#vq').focus(); });
+  $('#vf').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return;
+    if(b.dataset.open!==undefined){ openOnly=!openOnly; b.classList.toggle('on',openOnly); }
+    else { filter=b.dataset.f; [...$('#vf').querySelectorAll('[data-f]')].forEach(x=>x.classList.toggle('on', x===b)); }
+    list(); });
+  $('#vb').addEventListener('click', e=>{
+    if(e.target.closest('[data-back]')){ $('#picked').hidden=true; list(); return; }
+    const el = e.target.closest('[data-v]'); if(el) detail(el.dataset.v);
+  });
+}
+
+function welcomeModal(){
+  if($('.welcome')) return;
+  openModal(`<div class="body welcome"><h2>👋 Živjo!</h2><p class="desc">Kdo si? Klikni svoje ime ali ga dopiši.</p>
+    <div class="names">${state.people.map(p=>`<button type="button" data-pick="${esc(p)}">${esc(p)}</button>`).join('')}</div>
+    <form id="welcomeForm" class="row"><div><input name="name" list="peopleList" placeholder="Ime in priimek…" autofocus maxlength="60" autocomplete="off"><datalist id="peopleList">${state.people.map(p=>`<option value="${esc(p)}">`).join('')}</datalist></div><div class="auto"><button class="btn primary">Naprej</button></div></form>
+    <p class="sub" style="margin:12px 0 0">Ime si zapomnimo na tej napravi, naslednjič te ne sprašujemo več.</p></div>`);
+  const done = () => { closeModal(); render(); if(!localStorage.getItem('wolt.seen')) setTimeout(helpModal, 350); };
+  $('.modal').addEventListener('click', e=>{ const b=e.target.closest('[data-pick]'); if(b){ me=b.dataset.pick; localStorage.setItem('wolt.me',me); done(); } });
+  $('#welcomeForm').addEventListener('submit', async e=>{ e.preventDefault(); const n=e.target.name.value.trim(); if(!n) return; const hit=state.people.find(p=>p.toLowerCase()===n.toLowerCase()); if(!hit) await mutate('/api/people',{name:n}); me=hit||n; localStorage.setItem('wolt.me',me); done(); });
+}
+
+function editDayModal(day){
+  const modal = openModal(`<div class="body"><h2>Uredi dan</h2><p class="desc">${esc(day.restaurant)}</p>
+    <form id="editDayForm">
+      ${day.venue?'':`<div class="opt"><label>Restavracija</label><input name="restaurant" value="${esc(day.restaurant)}" required></div>`}
+      <div class="opt row"><div><label>Datum</label><input name="date" type="date" value="${esc(day.date)}" required></div><div><label>Rok za naročila</label><input name="deadline" type="time" value="${esc(day.deadline||'')}"></div></div>
+      <div class="opt"><label>Na Woltu naroča</label><select name="orderer"><option value="">—</option>${state.people.map(p=>`<option ${day.orderer===p?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+      <div class="opt"><button type="button" class="btn danger" id="delDay">🗑 Izbriši ta dan z vsemi naročili</button></div>
+    </form></div>
+    <div class="foot"><button class="btn primary" id="saveDay" style="flex:1">Shrani</button></div>`);
+  $('#saveDay').addEventListener('click', async ()=>{ const f=$('#editDayForm'); if(!f.reportValidity()) return; const d=Object.fromEntries(new FormData(f)); await mutate(`/api/days/${day.id}`, d); closeModal(); toast('✓ Shranjeno'); });
+  $('#delDay').addEventListener('click', async ()=>{ if(!confirm(`Izbrišem ${day.restaurant} (${dateSl(day.date)}) z vsemi naročili?`)) return; await mutate(`/api/days/${day.id}/delete`,{}); closeModal(); toast('Dan izbrisan'); });
+}
+
+async function adminApi(path, body){
+  const tok = sessionStorage.getItem('adminTok')||'';
+  const r = await fetch(path, {method: body?'POST':'GET', headers:{'Content-Type':'application/json','X-Admin':tok}, body: body?JSON.stringify(body):undefined});
+  const j = await r.json().catch(()=>({error:'Napaka'}));
+  if(r.status===403){ sessionStorage.removeItem('adminTok'); closeModal(); adminModal(); throw new Error('auth'); }
+  if(!r.ok){ toast(j.error||'Napaka'); throw new Error(j.error); }
+  return j;
+}
+function adminModal(){
+  if(!sessionStorage.getItem('adminTok')){
+    openModal(`<div class="body"><h2>🛠 Admin</h2><p class="desc">Vnesi admin kodo (ni isto kot PIN skupine).</p>
+      <form id="adminLogin"><input name="pin" type="password" inputmode="numeric" autofocus placeholder="admin koda" style="font-size:1.2rem;text-align:center;letter-spacing:.2em"></form></div>
+      <div class="foot"><button class="btn primary" id="adminGo" style="flex:1">Odkleni</button></div>`);
+    const go = async ()=>{ const pin=$('#adminLogin').pin.value; const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})}); const j=await r.json(); if(!r.ok){ toast(j.error||'Napaka'); return; } sessionStorage.setItem('adminTok', j.token); closeModal(); setTimeout(adminModal,300); };
+    $('#adminGo').addEventListener('click', go); $('#adminLogin').addEventListener('submit', e=>{ e.preventDefault(); go(); });
+    return;
+  }
+  let view='groups', gid=null;
+  openModal(`<div class="picker-head"><h2>🛠 Admin</h2><div class="tabs" style="position:static;margin:0"><button class="active" data-av="groups">Skupine</button><button data-av="log">Dnevnik sprememb</button><button data-av="versions">Različice</button></div></div><div class="picker-body" id="ab"><div class="spinner">Nalagam…</div></div>`, true);
+  const groupSel = (gs, cur) => `<div class="row" style="margin-bottom:12px"><div><label>Skupina</label><select id="agSel">${gs.map(g=>`<option value="${esc(g.id)}" ${g.id===cur?'selected':''}>${esc(g.name)} (PIN ${esc(g.pin)})</option>`).join('')}</select></div></div>`;
+  const draw = async ()=>{
+    const d = await adminApi('/api/admin/groups'); gid = gid || d.active || d.groups[0]?.id;
+    let h='';
+    if(view==='groups'){
+      h += `<div class="card"><h3>Nova skupina</h3><form id="agNew" class="row"><div><label>Ime</label><input name="name" placeholder="npr. Pro Plus – marketing" required></div><div><label>PIN (4–8 številk)</label><input name="pin" inputmode="numeric" pattern="\\d{4,8}" required></div><div class="auto"><button class="btn primary">Ustvari</button></div></form></div>`;
+      for(const g of d.groups){
+        h += `<div class="card"><h3 style="display:flex;align-items:center;gap:10px">${esc(g.name)} <span class="pill-badge">PIN ${esc(g.pin)}</span>${g.id===d.active?'<span class="sub">(trenutna)</span>':''}</h3>
+          <div class="meta" style="margin-bottom:8px"><span>${g.people.length} ${plural(g.people.length,'oseba','osebi','osebe','oseb')}</span><span>${g.days} dni</span><span>📍 ${esc(g.location)}</span>${g.last?`<span>zadnja sprememba ${esc(g.last.replace('T',' ').replace(/[+-]\d\d:\d\d$/,''))}</span>`:''}</div>
+          <div style="margin-bottom:10px">${g.people.map(p=>`<span class="tag">${esc(p)} <button type="button" class="tagx" data-rmperson="${esc(p)}" data-gid="${esc(g.id)}" title="Odstrani osebo iz skupine">×</button></span>`).join('')||'<span class="sub">še nihče</span>'}</div>
+          <form class="row agEdit" data-gid="${esc(g.id)}"><div><label>Ime</label><input name="name" value="${esc(g.name)}"></div><div><label>PIN</label><input name="pin" value="${esc(g.pin)}" inputmode="numeric" pattern="\\d{4,8}"></div><div class="auto"><button class="btn">Shrani</button></div></form></div>`;
+      }
+    } else if(view==='log'){
+      h += groupSel(d.groups, gid);
+      const {log} = await adminApi(`/api/admin/group/${gid}/log`);
+      h += log.length ? `<div class="table-wrap"><table><thead><tr><th>Kdaj</th><th>Kdo</th><th>Kaj</th></tr></thead><tbody>${log.map(e=>`<tr class="${/IZBRISAL|OBNOVIL|NAPAKA/.test(e.text)?'mine':''}"><td class="sub" style="white-space:nowrap">${esc(e.ts.replace('T',' ').replace(/[+-]\d\d:\d\d$/,''))}</td><td><b>${esc(e.who)}</b></td><td>${esc(e.text)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Dnevnik je prazen.</div>';
+    } else {
+      h += groupSel(d.groups, gid) + `<p class="sub">Pred vsako spremembo se shrani prejšnje stanje. Obnovitev vrne skupino v izbrano stanje (tudi ta korak se zabeleži in ga je mogoče razveljaviti).</p>`;
+      const {versions} = await adminApi(`/api/admin/group/${gid}/versions`);
+      h += versions.length ? `<div class="table-wrap"><table><thead><tr><th>Stanje pred</th><th class="num">Dni</th><th class="num">Naročil</th><th class="num">Oseb</th><th></th></tr></thead><tbody>${versions.map(v=>`<tr><td>${esc(v.id.replace(/^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2}).*/,'$3. $2. $1 $4:$5:$6'))}</td><td class="num">${v.days}</td><td class="num">${v.orders}</td><td class="num">${v.people}</td><td class="num"><button class="btn sm" data-restore="${esc(v.id)}">Obnovi</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Ni shranjenih različic.</div>';
+    }
+    const ab=$('#ab'); if(ab) ab.innerHTML=h;
+  };
+  draw();
+  const m=$('.modal');
+  m.addEventListener('click', async e=>{
+    const t=e.target.closest('[data-av]'); if(t){ view=t.dataset.av; [...m.querySelectorAll('[data-av]')].forEach(x=>x.classList.toggle('active',x===t)); draw(); return; }
+    const x=e.target.closest('[data-rmperson]'); if(x){ if(!confirm(`Odstranim osebo „${x.dataset.rmperson}“ iz skupine? Njena pretekla naročila ostanejo v zgodovini.`)) return; await adminApi(`/api/admin/group/${x.dataset.gid}/removeperson`,{name:x.dataset.rmperson}); toast('✓ Oseba odstranjena'); lastJson=''; refresh(); draw(); return; }
+    const r=e.target.closest('[data-restore]'); if(r){ if(!confirm('Obnovim to različico? Trenutno stanje bo shranjeno kot različica.')) return; await adminApi(`/api/admin/group/${gid}/restore`,{version:r.dataset.restore}); toast('✓ Obnovljeno'); lastJson=''; refresh(); draw(); }
+  });
+  m.addEventListener('change', e=>{ if(e.target.id==='agSel'){ gid=e.target.value; draw(); } });
+  m.addEventListener('submit', async e=>{
+    e.preventDefault(); const f=e.target; const d=Object.fromEntries(new FormData(f));
+    if(f.id==='agNew'){ await adminApi('/api/admin/groups', d); toast('✓ Skupina ustvarjena'); draw(); }
+    else if(f.classList.contains('agEdit')){ await adminApi(`/api/admin/group/${f.dataset.gid}`, d); toast('✓ Shranjeno'); draw(); }
+  });
+}
+
+// Poenostavljena naročilna stran za telefon: /order/<dayId>
+const orderDone = {};  // dayId -> Set(indeksov odkljukanih), v pomnilniku
+async function renderOrderMode(dayId){
+  document.body.classList.add('order-mode');
+  const day = state.days.find(d=>d.id===dayId);
+  const root = $('#main'); $('#days').innerHTML=''; document.querySelector('header').style.display='none';
+  if(!day){ root.innerHTML = `<div class="empty"><h2>Naročilo ni najdeno</h2>Povezava je morda zastarela.<br><a class="btn primary" style="margin-top:12px" href="/">Odpri Malico</a></div>`; return; }
+  const v = day.venue || {};
+  // združi jedi po vrsti+dodatkih
+  const items = {};
+  for(const o of day.orders){ const k=o.itemId+'|'+o.item+(o.options?' — '+o.options:''); items[k] = items[k]||{qty:0, who:[], item:o.item, options:o.options, note:[], itemId:o.itemId}; items[k].qty+=o.qty; items[k].who.push(o.person+(o.qty>1?' ×'+o.qty:'')); if(o.note) items[k].note.push(o.person+': '+o.note); }
+  const list = Object.values(items);
+  const itemUrl = it => v.url && it.itemId && /^[a-f0-9]{24}$/.test(it.itemId) ? `${v.url}/itemid-${it.itemId}` : (v.url||'');
+  const c = calc(day);
+  const doneSet = orderDone[dayId] ||= new Set();
+  const draw = () => {
+    root.innerHTML = `<div class="ordermode">
+      <div class="om-head"><a href="/" class="om-back">‹ Malica</a><div class="om-progress">${doneSet.size}/${list.length} dodano</div></div>
+      <h1>${esc(day.restaurant)}</h1>
+      <p class="sub">${dateLong(day.date)} · ${nOrders(day.orders.length)}${day.deadline?` · rok ${esc(day.deadline)}`:''}</p>
+      <p class="om-hint">Pri vsaki jedi klikni <b>Odpri na Woltu</b>, izberi dodatke in jo daj v košarico. Potem jo odkljukaj.</p>
+      <div class="om-list">${list.map((it,i)=>`
+        <div class="om-item ${doneSet.has(i)?'done':''}" data-i="${i}">
+          <button class="om-check" data-check="${i}" title="Označi kot dodano">${doneSet.has(i)?'✓':''}</button>
+          <div class="om-body"><div class="om-name"><b>${it.qty}×</b> ${esc(it.item)}</div>${it.options?`<div class="sub">${esc(it.options)}</div>`:''}${it.note.length?`<div class="sub">✎ ${it.note.map(esc).join(' · ')}</div>`:''}<div class="sub">${esc(it.who.join(', '))}</div></div>
+          ${itemUrl(it)?`<a class="btn primary om-open" href="${esc(itemUrl(it))}" target="_blank" rel="noopener" data-open="${i}">Odpri na Woltu ↗</a>`:'<span class="sub">ročni vnos</span>'}
+        </div>`).join('')}</div>
+      <div class="om-foot">
+        <div class="om-total"><span>Jedi skupaj</span><b>${fmt(c.subtotal)}</b></div>
+        ${v.url?`<a class="btn" href="${esc(v.url)}" target="_blank" rel="noopener">Odpri restavracijo na Woltu ↗</a>`:''}
+        ${doneSet.size===list.length && list.length?`<div class="banner ok" style="margin-top:10px"><div><b>Vse dodano 🎉</b><div class="sub">Na Woltu preveri košarico in oddaj naročilo, potem spodaj vpiši, koliko si plačal.</div></div></div>`:''}
+        ${day.status==='open' ? `<div class="card om-fin"><h3>Zaključi naročilo</h3>
+          <p class="sub" style="margin:-4px 0 10px">Ko oddaš naročilo, vpiši <b>končni znesek z Wolta</b> (z dostavo in stroški). Razliko razdelimo med sodelavce.</p>
+          <form id="omFin">
+            <label>Skupaj plačano na Woltu (€)</label><input name="grandTotal" type="number" step="0.01" min="0" inputmode="decimal" placeholder="${fmt(c.subtotal).replace(' €','')}" style="font-size:1.25rem;width:100%">
+            <div class="row" style="margin-top:8px"><div><label>Plačal/a</label><select name="payer">${state.people.map(p=>`<option ${(day.payer||day.orderer)===p?'selected':''}>${esc(p)}</option>`).join('')}</select></div>
+            <div><label>Kako razdelimo doplačilo</label><select name="feeSplit"><option value="proportional">sorazmerno</option><option value="equal" ${day.feeSplit==='equal'?'selected':''}>enako na osebo</option></select></div></div>
+            <div id="omFinPreview" class="sub" style="margin-top:8px"></div>
+          </form>
+          <button class="btn primary" data-act="omfinish" style="margin-top:10px">✓ Zaključi in pokaži obračun</button></div>`
+        : `<div class="banner ok" style="margin-top:10px"><div><b>Naročilo zaključeno</b><div class="sub">Plačano ${fmt(day.grandTotal||c.subtotal)}${day.payer?` · plačnik ${esc(day.payer)}`:''}</div></div><a class="btn primary" href="/" style="margin-top:8px">Odpri obračun</a></div>`}
+      </div></div>`;
+    omPreview();
+  };
+  const omRead = () => { const f=$('#omFin'); if(!f) return null; const d=Object.fromEntries(new FormData(f)); return {...day, grandTotal:+d.grandTotal||0, feeSplit:d.feeSplit, payer:d.payer}; };
+  const omPreview = () => { const d=omRead(); const el=$('#omFinPreview'); if(!d||!el) return; const cc=calc(d);
+    el.innerHTML = (cc.extra?`Doplačilo ${fmt(cc.extra)} · `:'Brez doplačil · ') + cc.rows.map(r=>`${esc(r.person)} <b>${fmt(r.total)}</b>`).join(' · '); };
+  window._omRead = omRead; window._omPreview = omPreview;
+  draw();
+  if(!window._omBound){ window._omBound = true;
+    root.addEventListener('click', e=>{
+      if(!orderRoute()) return;
+      const ch=e.target.closest('[data-check]'); const op=e.target.closest('[data-open]');
+      const fin=e.target.closest('[data-act="omfinish"]');
+      if(ch){ const i=+ch.dataset.check; doneSet.has(i)?doneSet.delete(i):doneSet.add(i); draw(); }
+      else if(op){ const i=+op.dataset.open; doneSet.add(i); setTimeout(draw,100); }
+      else if(fin){ const d=window._omRead && window._omRead(); if(!d) return; const cc=calc(d);
+        if(d.grandTotal && d.grandTotal < cc.subtotal && !confirm(`Vpisani znesek (${fmt(d.grandTotal)}) je nižji od cene jedi (${fmt(cc.subtotal)}). Vseeno zaključim?`)) return;
+        fin.disabled=true; mutate(`/api/days/${d.id}`, {grandTotal:d.grandTotal, feeSplit:d.feeSplit, payer:d.payer, status:'ordered'}).then(()=>toast('✓ Naročilo zaključeno')).catch(()=>{ fin.disabled=false; }); }
+    });
+    root.addEventListener('input', e=>{ if(orderRoute() && e.target.closest('#omFin') && window._omPreview) window._omPreview(); });
+    root.addEventListener('change', e=>{ if(orderRoute() && e.target.closest('#omFin') && window._omPreview) window._omPreview(); });
+  }
+}
+
+function historyModal(){
+  const T = todayIso();
+  const past = state.days.filter(d=>d.date<T).sort((a,b)=>b.date.localeCompare(a.date));
+  const rows = past.map(d=>{ const c=calc(d); return `<div class="day" data-histday="${d.id}" style="min-width:0;width:100%;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+    <div><b>${esc(d.restaurant)}</b><div class="sub">${dateSl(d.date)} · ${nOrders(d.orders.length)}${d.payer?` · plačal ${esc(d.payer)}`:''}</div></div>
+    <div style="text-align:right"><b>${fmt(c.total)}</b><div class="sub">${d.status==='ordered'?'naročeno':'osnutek'}</div></div></div>`; }).join('');
+  openModal(`<div class="body"><h2>🕘 Zgodovina naročil</h2><p class="desc">Pretekli dnevi. Klikni za podrobnosti in obračun.</p>
+    ${past.length?rows:'<p class="sub">Še ni preteklih naročil.</p>'}</div>`);
+  $('.modal').addEventListener('click', e=>{ const t=e.target.closest('[data-histday]'); if(t){ currentDayId=t.dataset.histday; localStorage.setItem('wolt.day',currentDayId); tab='split'; closeModal(); render(); } });
+}
+
+function helpModal(){
+  localStorage.setItem('wolt.seen','1');
+  openModal(`<div class="body help"><h2>Kako deluje Malica</h2>
+    <ol class="steps">
+      <li><span class="n">1</span><div><b>Nekdo predlaga restavracijo</b><div class="sub">Klik na <b>+ Predlagaj restavracijo</b>, izbira z Wolta (iskanje, filtri, predogled menija), datum in rok za naročila.</div></div></li>
+      <li><span class="n">2</span><div><b>Vsak izbere svojo jed</b><div class="sub">V zavihku <b>Meni</b> klikneš jed, izbereš dodatke in količino. V košarici desno (na telefonu spodaj) vidiš, kaj naročajo sodelavci.</div></div></li>
+      <li><span class="n">3</span><div><b>Ena oseba naroči na Woltu</b><div class="sub">Zavihek <b>Povzetek za Wolt</b> ima seznam s povezavami na vsako jed — samo še doda jih v košarico.</div></div></li>
+      <li><span class="n">4</span><div><b>Obračun</b><div class="sub">Kdor naroča, klikne <b>Zaključi naročilo</b>, vpiše dostavo in stroške; aplikacija izračuna, koliko kdo nakaže, in kdo je že poravnal.</div></div></li>
+    </ol>
+    <p class="sub">Namig: na telefonu stran dodaj na začetni zaslon (Deli → Dodaj na začetni zaslon), pa jo imaš kot aplikacijo.</p>
+    </div><div class="foot"><button class="btn primary" data-close style="flex:1">Jasno, gremo!</button></div>`);
+}
+
+function locationModal(){
+  const l = state.location;
+  openModal(`<div class="body"><h2>Lokacija pisarne</h2><p class="desc">Wolt prikaže restavracije, ki dostavljajo na to lokacijo.</p>
+    <form id="locForm">
+      <div class="opt"><label>Ime</label><input name="label" value="${esc(l.label)}" placeholder="npr. Pisarna, Dunajska 5"></div>
+      <div class="opt row"><div><label>Zemljepisna širina (lat)</label><input name="lat" type="number" step="any" value="${l.lat}"></div><div><label>Dolžina (lon)</label><input name="lon" type="number" step="any" value="${l.lon}"></div></div>
+      <button type="button" class="btn" id="geo">📍 Uporabi mojo trenutno lokacijo</button>
+      <p class="sub">Koordinate dobiš tudi z desnim klikom na Google Maps.</p>
+    </form></div>
+    <div class="foot"><button class="btn primary" id="locSave">Shrani</button></div>`);
+  $('#geo').addEventListener('click', ()=>{ navigator.geolocation?.getCurrentPosition(p=>{ $('#locForm').lat.value=p.coords.latitude.toFixed(5); $('#locForm').lon.value=p.coords.longitude.toFixed(5); }, ()=>toast('Lokacije ni bilo mogoče pridobiti')); });
+  $('#locSave').addEventListener('click', async ()=>{ await mutate('/api/location', Object.fromEntries(new FormData($('#locForm')))); venuesCache=null; sessionStorage.removeItem('venues'); closeModal(); toast('Lokacija shranjena'); });
+}
+
+// ---------- dogodki ----------
+$('#meSelect').addEventListener('change', async e=>{
+  if(e.target.value==='__switch'){ e.target.value=me; welcomeModal(); return; }
+  if(e.target.value==='__admin'){ e.target.value=me; adminModal(); return; }
+  if(e.target.value==='__logout'){ e.target.value=me; if(confirm('Izhod iz skupine? Za vrnitev boš potreboval/a PIN.')) location.href='/logout'; return; }
+  me=e.target.value;
+  localStorage.setItem('wolt.me', me); render();
+});
+$('#locBtn').addEventListener('click', locationModal);
+$('#helpBtn').addEventListener('click', helpModal);
+
+document.addEventListener('click', async e=>{
+  if(!e.target.closest('[data-act="daymenu"]')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+  if(e.target.closest('[data-close]') || (e.target.classList.contains('backdrop'))) { closeModal(); return; }
+  const sc = e.target.closest('[data-scroll]'); if(sc){ document.getElementById(sc.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  const pt = e.target.closest('[data-paid-toggle]'); if(pt){ const day=curDay(); const paid=new Set(day.paid); paid.has(pt.dataset.paidToggle)?paid.delete(pt.dataset.paidToggle):paid.add(pt.dataset.paidToggle); await mutate(`/api/days/${day.id}`,{paid:[...paid]}); return; }
+  const dd = e.target.closest('[data-delday]'); if(dd){ e.stopPropagation(); const d=state.days.find(x=>x.id===dd.dataset.delday); if(d && confirm(`Izbrišem restavracijo ${d.restaurant} (${dateSl(d.date)})${d.orders.length?` skupaj z ${nOrders(d.orders.length)}`:''}? Tega ni mogoče razveljaviti (admin lahko obnovi prejšnjo različico).`)){ await mutate(`/api/days/${d.id}/delete`,{}); toast('Dan izbrisan'); } return; }
+  const t = e.target.closest('[data-new],[data-day],[data-tab],[data-act],[data-edit],[data-delorder],[data-item],[data-focustab]');
+  if(!t) return;
+  const day = curDay();
+  if(t.dataset.new!==undefined){ if(!me){ welcomeModal(); return; } pickerModal(); }
+  else if(t.dataset.day){ currentDayId=t.dataset.day; localStorage.setItem('wolt.day',currentDayId); tab = curDay()?.status==='ordered' ? 'split' : 'menu'; render(); }
+  else if(t.dataset.tab){ tab=t.dataset.tab; render(); }
+  else if(t.dataset.item){ if(t.classList.contains('off')) return; if(!me){ welcomeModal(); return; }
+    const m = menus[t.dataset.slug]; const it = m.categories.flatMap(c=>c.items).find(i=>i.id===t.dataset.item); itemModal(it); }
+  else if(t.dataset.edit){ manualModal(day.orders.find(o=>o.id===t.dataset.edit)); }
+  else if(t.dataset.delorder){ const o=day.orders.find(x=>x.id===t.dataset.delorder); if(o && (o.person===me || confirm(`Odstranim naročilo (${o.person}: ${o.item})?`))) { await mutate(`/api/days/${day.id}/orders-delete`,{id:t.dataset.delorder}); toast('Odstranjeno'); } }
+  else if(t.dataset.act==='cart'){ cartModal(day); }
+  else if(t.dataset.act==='manual'){ if(!me){ welcomeModal(); return; } if(!canOrder(day)){ toast('Naročila so zaprta'); return; } manualModal(); }
+  else if(t.dataset.act==='daymenu'){ e.stopPropagation(); t.parentElement.classList.toggle('open'); return; }
+  else if(t.dataset.act==='woltpush-go'){ tab='summary'; render(); setTimeout(()=>{ const b=$('#woltPushBtn'); if(b){ b.scrollIntoView({behavior:'smooth',block:'center'}); b.click(); } },50); }
+  else if(t.dataset.act==='wolttotal-go'){ tab='summary'; render(); setTimeout(()=>{ const b=$('#woltTotalBtn'); if(b){ b.scrollIntoView({behavior:'smooth',block:'center'}); b.click(); } },50); }
+  else if(t.dataset.act==='finish' || t.dataset.act==='edit-fees'){ finishModal(day); }
+  else if(t.dataset.act==='status'){ await mutate(`/api/days/${day.id}`,{status:t.dataset.v}); tab = t.dataset.v==='ordered' ? 'split' : 'menu'; render(); }
+  else if(t.dataset.act==='editday'){ editDayModal(day); }
+  else if(t.dataset.act==='history'){ historyModal(); }
+  else if(t.dataset.act==='copyorder'){ await navigator.clipboard.writeText($('#orderLink').value); toast('Povezava kopirana'); }
+  else if(t.dataset.focustab){ e.preventDefault(); const r=await extCall({type:'focusTab', tabId:+t.dataset.focustab}); if(r?.error) window.open(t.href,'_blank','noopener'); }
+  else if(t.dataset.act==='woltpush'){ const b=$('#woltPushBtn'); b.disabled=true; b.textContent='Pošiljam v Wolt…';
+    const r = await extCall({type:'push', dayId: day.id, who: me}); const out=$('#woltPushResult'); if(!out){ return; }
+    if(r.error){ const needLogin=/wolt\.com|prijav/i.test(r.error); out.innerHTML=`<div class="banner" style="background:#fdecea;border-color:#f5c6c2"><div><b>✗ ${esc(r.error)}</b></div>${needLogin?`<a class="btn primary" href="https://wolt.com/sl/login" target="_blank" rel="noopener">Prijava na Woltu ↗</a>`:''}</div>`; b.disabled=false; b.textContent='🛒 Poskusi znova'; }
+    else { out.innerHTML=`<div class="banner ok"><div><b>✓ V košarici pri ${esc(r.restaurant)}: ${r.pushed} ${plural(r.pushed,'jed','jedi','jedi','jedi')}</b>${r.lines?`<div class="sub">${r.lines.map(l=>`${l.count}× ${esc(l.name)}`).join(' · ')}</div>`:''}${r.skipped.length?`<div class="sub" style="color:var(--red)">Dodaj ročno (ni z Wolta): ${r.skipped.map(esc).join('; ')}</div>`:''}</div><a class="btn primary" href="${esc(r.url)}" target="_blank" rel="noopener" data-focustab="${r.tabId||''}">Odpri Wolt, preveri in plačaj ↗</a>${r.tabId?`<div class="sub" style="margin-top:6px">Wolt se je odprl v novem zavihku s polno košarico. Če je na Woltu kaj zmotilo (npr. okno starega naročila), klikni <b>Pošlji znova</b> — košarica se samo zamenja.</div>`:''}</div>`; b.disabled=false; b.textContent='🔁 Pošlji znova v Wolt košarico'; }
+  }
+  else if(t.dataset.act==='wolttotal'){ const b=$('#woltTotalBtn'); b.disabled=true; b.textContent='Berem iz Wolta…';
+    const r = await extCall({type:'lastOrder', dayId: day.id, who: me}); const out=$('#woltTotalResult'); if(!out) return;
+    if(r.error){ out.innerHTML=`<div class="banner" style="background:#fdecea;border-color:#f5c6c2"><div><b>✗ ${esc(r.error)}</b><div class="sub">Znesek lahko vpišeš tudi sam: Naročilo ▾ → Zaključi naročilo.</div></div></div>`; b.disabled=false; b.textContent='💶 Poskusi znova'; }
+    else { out.innerHTML=`<div class="banner ok"><div><b>✓ Wolt: plačano ${fmt(r.total)}</b><div class="sub">jedi ${fmt(r.items)} · dostava ${fmt(r.delivery)}${r.tip?` · napitnina ${fmt(r.tip)}`:''} · ${esc(r.time||'')}</div></div></div>`; b.textContent='✓ Prebrano'; finishModal({...day, grandTotal:r.total, payer: day.payer||me}); }
+  }
+  else if(t.dataset.act==='copy'){ await navigator.clipboard.writeText($('#summaryText').textContent); toast('Kopirano'); }
+});
+
+document.addEventListener('change', async e=>{
+  if(e.target.dataset.orderer!==undefined){ const day=curDay(); await mutate(`/api/days/${day.id}`,{orderer:e.target.value, payer: day.payer || e.target.value}); toast(e.target.value?`Na Woltu naroča ${e.target.value}`:'Kdo naroča: ni določeno'); return; }
+  if(e.target.dataset.paid!==undefined && e.target.type==='checkbox'){
+    const day = curDay(); const paid = new Set(day.paid);
+    e.target.checked ? paid.add(e.target.dataset.paid) : paid.delete(e.target.dataset.paid);
+    await mutate(`/api/days/${day.id}`,{paid:[...paid]});
+  }
+});
+document.addEventListener('submit', async e=>{
+  e.preventDefault();
+});
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+refresh();
+setInterval(()=>{ if(orderRoute()) return; if(!$('#modalRoot').children.length && !['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName)) refresh(); }, 6000);
+</script>
+</body>
+</html>

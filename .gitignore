@@ -1,0 +1,18 @@
+# runtime data & secrets (never commit)
+data/
+data.json
+data.json.tmp
+.secret
+malica.env
+*.env
+
+# local/session files
+HANDOFF.md
+deploy/NAVODILA.md
+.claude/
+__pycache__/
+*.pyc
+
+# build artifacts
+malica-wolt-extension.zip
+store-assets/

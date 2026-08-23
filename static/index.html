@@ -512,6 +512,10 @@ function renderDay(day){
         <div id="woltStatus" class="sub" style="margin-bottom:8px">Preverjam prijavo na Woltu…</div>
         <button class="btn primary" id="woltPushBtn" data-act="woltpush">🛒 Prenesi ${nOrders(day.orders.length)} v Wolt košarico</button><div id="woltPushResult" style="margin-top:10px"></div>
         ${day.status==='open'?`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><div class="sub" style="margin-bottom:8px">Ko na Woltu plačaš, lahko končni znesek potegneš kar iz Woltove zgodovine naročil.</div><button class="btn" id="woltTotalBtn" data-act="wolttotal">💶 Preberi plačani znesek z Wolta in zaključi</button><div id="woltTotalResult" style="margin-top:8px"></div></div>`:''}</div>`:''}
+      ${open && day.orders.length ? `<div class="card"><h3>✓ Zaključi naročilo</h3>
+        <p class="sub" style="margin:-6px 0 10px">Ko je naročilo oddano na Woltu, vpiši končni znesek (z dostavo in stroški) — Malica razdeli razliko med sodelavce in pripravi obračun.</p>
+        <button class="btn primary" data-act="finish">✓ Zaključi naročilo</button></div>`
+        : day.orders.length ? `<div class="card"><h3>✓ Naročilo je zaključeno</h3><p class="sub" style="margin:-6px 0 10px">Plačano ${fmt(day.grandTotal||calc(day).subtotal)}${day.payer?` · plačnik ${esc(day.payer)}`:''}.</p><button class="btn" data-tab="split">Odpri obračun ›</button></div>`:''}
       ${v.id && day.orders.length ? `<div class="card"><h3>📱 Naročam s telefona</h3>
         <div class="os-qr"><canvas id="orderQR" data-url="${location.origin}/o/${day.id}"></canvas><div class="sub">Skeniraj s telefonom in jedi po vrsti dodaj v Wolt košarico.</div></div>
         <a class="btn primary os-mobilebtn" href="/o/${day.id}">📱 Odpri seznam za naročanje</a></div>`:''}

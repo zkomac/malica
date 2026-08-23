@@ -75,7 +75,7 @@ python -m unittest discover -s tests -v
 
 ## About
 
-Malica was built by [Žiga Komac](https://github.com/zkomac) — an engineer who also runs the business side of things, and who got tired of collecting lunch orders by hand. It started as a small tool for his own team and is shared here in case it saves yours a few minutes a day.
+Malica was built by [Žiga Komac](https://github.com/zkomac) — a strategy executive with an engineering background who, after watching his coworkers collect lunch orders by hand every single day, decided it was faster to build the tool than to keep doing it. It started as a small tool for one team and is shared here in case it saves yours a few minutes a day.
 
 ## License
 

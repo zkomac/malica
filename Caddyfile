@@ -1,0 +1,22 @@
+# MALICA_DOMAIN / MALICA_TLS_EMAIL come from malica.env (docker-compose env_file).
+# For local use set MALICA_DOMAIN=localhost — Caddy then issues a self-signed cert.
+# Extra sites on the same host: drop a *.caddy file into caddy-sites/ (see caddy-sites/README.md).
+{
+    email {$MALICA_TLS_EMAIL}
+}
+
+{$MALICA_DOMAIN} {
+    encode gzip
+    request_body {
+        max_size 1MB
+    }
+    header {
+        -Server
+        Strict-Transport-Security "max-age=31536000"
+    }
+    reverse_proxy malica:8000 {
+        header_up X-Real-IP {remote_host}
+    }
+}
+
+import sites/*.caddy

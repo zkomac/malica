@@ -1,12 +1,34 @@
+# Whole stack: Caddy (TLS via Let's Encrypt, gzip, reverse proxy) + the app.
+#   cp .env.example malica.env; edit MALICA_DOMAIN (and the PINs); docker compose up -d --build
 services:
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"          # HTTP/3
+    env_file:
+      - malica.env             # MALICA_DOMAIN, MALICA_TLS_EMAIL
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-sites:/etc/caddy/sites:ro
+      - caddy_data:/data       # certificates — keep across restarts
+      - caddy_config:/config
+    depends_on:
+      - malica
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
   malica:
     build: .
     image: malica:latest
     container_name: malica
     restart: unless-stopped
-    # Only reachable from the host; nginx on the host terminates TLS and proxies here.
-    ports:
-      - "127.0.0.1:8000:8000"
+    expose:
+      - "8000"                 # only reachable from caddy on the compose network
     env_file:
       - malica.env
     volumes:
@@ -14,3 +36,7 @@ services:
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  caddy_data:
+  caddy_config:

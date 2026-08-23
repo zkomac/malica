@@ -36,8 +36,8 @@ static/js/               core, split, views, modals, admin, order-mode, main
 static/qr.js             Dependency-free QR code generator
 static/privacy.html      Privacy policy (required by the Chrome Web Store)
 extension/               Chrome/Edge extension "Malica ↔ Wolt" (Manifest V3)
-Dockerfile, docker-compose.yml   Production image (python:3.12-slim + gunicorn)
-deploy/                  install-docker.sh (Docker + nginx + Let's Encrypt); install.sh (bare metal)
+Dockerfile, docker-compose.yml, Caddyfile   Production stack: app image (python:3.12-slim + gunicorn) + Caddy (TLS)
+deploy/                  install-docker.sh (Docker stack on a fresh VPS); install.sh (bare metal nginx + systemd)
 tests/test_app.py        Server tests (python -m unittest discover -s tests)
 tools/pack_extension.py  Builds the Web Store zip from extension/
 ```
@@ -65,7 +65,7 @@ A `.secret` file (HMAC key for cookies) is generated automatically next to `app.
 
 ## Deploy
 
-Docker: `cp .env.example malica.env && docker compose up -d --build` runs the app on `127.0.0.1:8000`; put nginx (or any TLS proxy) in front. `deploy/install-docker.sh` does the whole thing on a fresh AlmaLinux 9 VPS — Docker, nginx, Let's Encrypt, firewall. A bare-metal `deploy/install.sh` (gunicorn + systemd) is kept as well. See [deploy/README.md](deploy/README.md).
+Docker: `cp .env.example malica.env`, set the domain, `docker compose up -d --build` — Caddy obtains the Let's Encrypt certificate and proxies to the app; nothing else to install. `deploy/install-docker.sh` does it on a fresh AlmaLinux 9 VPS (Docker + firewall). A bare-metal `deploy/install.sh` (gunicorn + systemd) is kept as well. See [deploy/README.md](deploy/README.md).
 
 ## Browser extension
 

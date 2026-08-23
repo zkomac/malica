@@ -5,6 +5,8 @@ data.json.tmp
 .secret
 malica.env
 *.env
+caddy-sites/*.caddy
+docker-compose.override.yml
 
 # local/session files
 HANDOFF.md

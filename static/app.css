@@ -286,3 +286,36 @@
     .row>div{min-width:100px}
   }
 .tagx{border:none;background:none;color:#999;font-size:14px;line-height:1;padding:0 0 0 2px;cursor:pointer;vertical-align:middle}.tagx:hover{color:var(--red,#e0453a)}
+
+/* ---- start chooser ---- */
+.start-grid{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.start-card{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer;width:100%}
+.start-card:hover{border-color:var(--blue);background:var(--blue-soft)}
+.start-card .ic{font-size:1.6rem;line-height:1}
+.start-card b{font-size:1.05rem;margin-top:4px}
+.start-card small{color:var(--ink-2);font-weight:400}
+
+/* ---- eat out ---- */
+.who-list{display:flex;flex-wrap:wrap;gap:6px}
+.who-chip{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.9rem;background:var(--chip);color:var(--ink)}
+.who-chip.in{background:#e3f6eb;color:#0f6e3a}
+.attend-btns{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.btn.danger-soft{background:#fdecea;color:var(--red,#e0453a);border-color:#f5c6c2}
+
+/* ---- poll ---- */
+.poll{display:flex;flex-direction:column;gap:8px}
+.poll-opt{position:relative;display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer;overflow:hidden}
+.poll-opt:hover{border-color:var(--blue)}
+.poll-opt.mine{border-color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+.poll-bar{position:absolute;inset:0 auto 0 0;background:var(--blue-soft);z-index:0;transition:width .2s}
+.poll-radio,.poll-label,.poll-count,.poll-x{position:relative;z-index:1}
+.poll-radio{font-size:1.1rem;color:var(--blue);flex:0 0 auto}
+.poll-label{flex:1;min-width:0;font-weight:600}
+.poll-count{font-weight:700;font-size:1.1rem;flex:0 0 auto}
+.poll-x{border:none;background:none;color:var(--ink-3);font-size:1.1rem;cursor:pointer;flex:0 0 auto;padding:0 2px}
+.poll-x:hover{color:var(--red,#e0453a)}
+.poll-add .row2{display:flex;gap:8px}.poll-add .row2 input{flex:1}
+.poll-close-btn{margin-top:14px;width:100%}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:2px}
+.seg-btn{border:none;background:var(--bg);padding:7px 14px;cursor:pointer;font-size:.9rem;color:var(--ink-2)}
+.seg-btn.active{background:var(--blue);color:#fff;font-weight:600}

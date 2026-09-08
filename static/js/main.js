@@ -10,16 +10,17 @@ $('#meSelect').addEventListener('change', async e=>{
 $('#locBtn').addEventListener('click', locationModal);
 $('#helpBtn').addEventListener('click', helpModal);
 
+document.addEventListener('click', e=>{ const sb=e.target.closest('.seg-btn'); if(sb && sb.closest('.seg')){ sb.closest('.seg').querySelectorAll('.seg-btn').forEach(x=>x.classList.toggle('active',x===sb)); } });
 document.addEventListener('click', async e=>{
   if(!e.target.closest('[data-act="daymenu"]')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
   if(e.target.closest('[data-close]') || (e.target.classList.contains('backdrop'))) { closeModal(); return; }
   const sc = e.target.closest('[data-scroll]'); if(sc){ document.getElementById(sc.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   const pt = e.target.closest('[data-paid-toggle]'); if(pt){ const day=curDay(); const paid=new Set(day.paid); paid.has(pt.dataset.paidToggle)?paid.delete(pt.dataset.paidToggle):paid.add(pt.dataset.paidToggle); await mutate(`/api/days/${day.id}`,{paid:[...paid]}); return; }
   const dd = e.target.closest('[data-delday]'); if(dd){ e.stopPropagation(); const d=state.days.find(x=>x.id===dd.dataset.delday); if(d && confirm(`Izbrišem restavracijo ${d.restaurant} (${dateSl(d.date)})${d.orders.length?` skupaj z ${nOrders(d.orders.length)}`:''}? Tega ni mogoče razveljaviti (admin lahko obnovi prejšnjo različico).`)){ await mutate(`/api/days/${d.id}/delete`,{}); toast('Dan izbrisan'); } return; }
-  const t = e.target.closest('[data-new],[data-day],[data-tab],[data-act],[data-edit],[data-delorder],[data-item],[data-focustab]');
+  const t = e.target.closest('[data-new],[data-day],[data-tab],[data-act],[data-edit],[data-delorder],[data-item],[data-focustab],[data-pollvote],[data-pollremove]');
   if(!t) return;
   const day = curDay();
-  if(t.dataset.new!==undefined){ if(!me){ welcomeModal(); return; } pickerModal(); }
+  if(t.dataset.new!==undefined){ startModal(); }
   else if(t.dataset.day){ currentDayId=t.dataset.day; localStorage.setItem('wolt.day',currentDayId); tab = curDay()?.status==='ordered' ? 'split' : 'menu'; render(); }
   else if(t.dataset.tab){ tab=t.dataset.tab; render(); }
   else if(t.dataset.item){ if(t.classList.contains('off')) return; if(!me){ welcomeModal(); return; }
@@ -47,6 +48,14 @@ document.addEventListener('click', async e=>{
     if(r.error){ out.innerHTML=`<div class="banner" style="background:#fdecea;border-color:#f5c6c2"><div><b>✗ ${esc(r.error)}</b><div class="sub">Znesek lahko vpišeš tudi sam: Naročilo ▾ → Zaključi naročilo.</div></div></div>`; b.disabled=false; b.textContent='💶 Poskusi znova'; }
     else { out.innerHTML=`<div class="banner ok"><div><b>✓ Wolt: plačano ${fmt(r.total)}</b><div class="sub">jedi ${fmt(r.items)} · dostava ${fmt(r.delivery)}${r.tip?` · napitnina ${fmt(r.tip)}`:''} · ${esc(r.time||'')}</div></div></div>`; b.textContent='✓ Prebrano'; finishModal({...day, grandTotal:r.total, payer: day.payer||me}); }
   }
+  else if(t.dataset.act==='pickfor'){ if(!me){ welcomeModal(); return; } pickerModal(day.id); }
+  else if(t.dataset.act==='attend'){ if(!me){ welcomeModal(); return; } await mutate(`/api/days/${day.id}/attend`,{person:me, going:t.dataset.going==='1'}); }
+  else if(t.dataset.act==='out-bill'){ outBillModal(day); }
+  else if(t.dataset.act==='poll-add'){ if(!me){ welcomeModal(); return; } const inp=$('#pollOptLabel'); const label=(inp.value||'').trim(); if(!label){ inp.focus(); return; } const seg=$('#pollSeg .seg-btn.active'); await mutate(`/api/days/${day.id}/poll-option`,{label, optKind: seg?seg.dataset.optkind:'out', person:me}); }
+  else if(t.dataset.act==='poll-close'){ if(!confirm('Zaključim anketo in iz zmagovalca naredim načrt?')) return; const s=await mutate(`/api/days/${day.id}/poll-close`,{}); const d=s.days.find(x=>x.id===day.id); tab='menu'; render(); toast(`✓ Zmagal/a: ${d?d.restaurant:''}`); }
+  else if(t.dataset.act==='seg'){ /* handled below */ }
+  else if(t.dataset.pollvote){ const x=e.target.closest('[data-pollremove]'); if(x) return; if(!me){ welcomeModal(); return; } const opt=day.poll.options.find(o=>o.id===t.dataset.pollvote); const mine=opt&&opt.votes.includes(me); await mutate(`/api/days/${day.id}/poll-vote`,{optionId: mine?'':t.dataset.pollvote, person:me}); }
+  else if(t.dataset.pollremove){ e.stopPropagation(); if(confirm('Odstranim to opcijo?')) await mutate(`/api/days/${day.id}/poll-option-delete`,{optionId:t.dataset.pollremove}); }
   else if(t.dataset.act==='copy'){ await navigator.clipboard.writeText($('#summaryText').textContent); toast('Kopirano'); }
 });
 

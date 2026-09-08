@@ -16,7 +16,11 @@ function render(){
   const pastCount = state.days.filter(d=>grp(d)===2).length;
   if(!currentDayId || !state.days.find(d=>d.id===currentDayId)) currentDayId = days[0]?.id || state.days[0]?.id || null;
   const chip = d => `<div class="day g${grp(d)} ${d.id===currentDayId?'active':''}" data-day="${d.id}">
-      <button class="delchip" data-delday="${d.id}" title="Izbriši dan">×</button><em class="tag-g g${grp(d)}">${grp(d)===0?'Danes':(relDay(d.date)||'Prihodnje')}</em><b>${esc(d.restaurant)}</b><span><i class="st ${d.status}"></i>${dateSl(d.date)} · ${nOrders(d.orders.length)}</span></div>`;
+      <button class="delchip" data-delday="${d.id}" title="Izbriši dan">×</button><em class="tag-g g${grp(d)}">${grp(d)===0?'Danes':(relDay(d.date)||'Prihodnje')}</em><b>${esc(d.restaurant)}</b><span><i class="st ${d.status}"></i>${dateSl(d.date)} · ${chipMeta(d)}</span></div>`;
+  const chipMeta = d => { const k=d.kind||'order';
+    if(k==='poll' && !(d.poll&&d.poll.closed)) return '🗳 anketa';
+    if(k==='out') return '🚶 ven · '+((d.going||[]).length)+' gre';
+    return nOrders(d.orders.length); };
   const todays = days.filter(d=>grp(d)===0), future = days.filter(d=>grp(d)===1);
   $('#days').innerHTML = `<div class="day add" data-new><b>+ Predlagaj</b><span>za danes, ${dateSl(todayIso())}</span></div>` + todays.map(chip).join('')
       + (pastCount?`<div class="day hist" data-act="history"><b>🕘 Zgodovina</b><span>${pastCount} ${plural(pastCount,'dan','dneva','dnevi','dni')}</span></div>`:'')
@@ -24,8 +28,8 @@ function render(){
 
   const day = curDay();
   const todayDay = state.days.find(d=>d.date===todayIso());
-  const banner = todayDay || !state.days.length ? '' : `<div class="banner"><div><b>Danes, ${dateSl(todayIso()).replace(/^[^,]+, /,'')} še ni predloga.</b><div class="sub">Kdo predlaga, kam?</div></div><button class="btn primary" data-new>🍽 Kam gremo danes? Predlagaj restavracijo</button></div>`;
-  $('#main').innerHTML = banner + (day ? renderDay(day) : `<div class="empty"><h2>Za danes še nihče ni nič predlagal</h2><p>Izberi restavracijo na Woltu, sodelavci si izberejo jedi, eden naroči.</p><button class="btn primary" data-new>🍽 Kam gremo danes? Predlagaj restavracijo</button></div>`);
+  const banner = todayDay || !state.days.length ? '' : `<div class="banner"><div><b>Danes, ${dateSl(todayIso()).replace(/^[^,]+, /,'')} še ni predloga.</b><div class="sub">Naročite na Wolt, pojdite ven — ali pa daj na glasovanje.</div></div><button class="btn primary" data-new>🍽 Kaj bo danes za malico?</button></div>`;
+  $('#main').innerHTML = banner + (day ? renderDay(day) : `<div class="empty"><h2>Za danes še nihče ni nič predlagal</h2><p>Naročite prek Wolta, pojdite ven na malico — ali pa z anketo vprašaj sodelavce, kaj jim paše.</p><button class="btn primary" data-new>🍽 Kaj bo danes za malico?</button></div>`);
   if(day && tab==='menu' && day.venue?.slug) renderMenu(day);
   if(day && tab==='summary' && $('#woltStatus')) extCall({type:'status'}).then(st=>{ const el=$('#woltStatus'); if(!el) return;
     el.innerHTML = st.woltLoggedIn ? '✓ Prijava na wolt.com zaznana' : `⚠ Nisi prijavljen na wolt.com. <a href="https://wolt.com/sl/login" target="_blank" rel="noopener">Prijavi se ↗</a> in potem klikni gumb.`; });
@@ -33,6 +37,9 @@ function render(){
 }
 
 function renderDay(day){
+  const kind = day.kind || 'order';
+  if(kind==='poll' && !(day.poll && day.poll.closed)) return renderPoll(day);
+  if(kind==='out') return renderOut(day);
   const v = day.venue || {};
   const open = canOrder(day);
   const late = day.status==='open' && isToday(day) && deadlinePassed(day);
@@ -80,7 +87,7 @@ function renderDay(day){
 
   if(tab==='menu'){
     html += `<div class="menu-layout">` + (v.slug ? `<div id="menu"><div class="spinner">Nalagam meni z Wolta…</div></div>`
-      : `<div class="empty">Ta dan nima povezane Wolt restavracije.${canOrder(day)?'<br><button class="btn primary" style="margin-top:12px" data-act="manual">+ Ročni vnos naročila</button>':''}</div>`)
+      : `<div class="empty">Ta dan še nima povezane Wolt restavracije.${canOrder(day)?'<br><button class="btn primary" style="margin-top:12px" data-act="pickfor">🍽 Izberi restavracijo na Woltu</button><br><button class="btn ghost" style="margin-top:8px" data-act="manual">+ Ročni vnos naročila</button>':''}</div>`)
       + renderCart(day) + `</div>` + `<div class="cartbar" data-act="cart"><span>🛒 ${nOrders(day.orders.length)}</span><span>${fmt(c.subtotal)} ›</span></div>`;
   }
 

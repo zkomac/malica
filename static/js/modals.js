@@ -99,7 +99,7 @@ function manualModal(existing){
   });
 }
 
-async function pickerModal(){
+async function pickerModal(attachDayId){
   openModal(`<div class="picker-head"><h2>Izberi restavracijo</h2>
       <div class="search"><input id="vq" placeholder="Išči restavracijo ali vrsto hrane…" autofocus><button class="clr" id="vclr" hidden>✕</button></div>
       <div class="filters" id="vf"></div></div>
@@ -160,8 +160,11 @@ async function pickerModal(){
 
 Dodam še en predlog za isti dan?`)) return;
       $('#pSave').disabled = true;
-      let s; try{ s = await mutate('/api/days', {date:$('#pDate').value, restaurant:v.name, url:v.url, deadline:$('#pDeadline').value, proposedBy:me, orderer:$('#pOrderer').value, venue:v}); }catch(e){ const b=$('#pSave'); if(b) b.disabled=false; return; }
-      currentDayId = s.days[s.days.length-1].id; localStorage.setItem('wolt.day', currentDayId); tab='menu'; closeModal(); render(); toast(`✓ ${v.name} predlagana`);
+      let s; try{
+        if(attachDayId){ s = await mutate(`/api/days/${attachDayId}`, {kind:'order', restaurant:v.name, url:v.url, orderer:$('#pOrderer').value, venue:v}); currentDayId = attachDayId; }
+        else { s = await mutate('/api/days', {kind:'order', date:$('#pDate').value, restaurant:v.name, url:v.url, deadline:$('#pDeadline').value, proposedBy:me, orderer:$('#pOrderer').value, venue:v}); currentDayId = s.days[s.days.length-1].id; }
+      }catch(e){ const b=$('#pSave'); if(b) b.disabled=false; return; }
+      localStorage.setItem('wolt.day', currentDayId); tab='menu'; closeModal(); render(); toast(`✓ ${v.name} predlagana`);
     });
     try{
       const m = await loadMenu(slug); const el = $('#vmenu'); if(!el || !m) return;
@@ -221,6 +224,7 @@ function historyModal(){
 function helpModal(){
   localStorage.setItem('wolt.seen','1');
   openModal(`<div class="body help"><h2>Kako deluje Malica</h2>
+    <p class="desc">Vsak dan se ekipa odloči: <b>naročamo na Wolt</b>, <b>gremo ven</b> ali pa se z <b>anketo</b> glasuje, kaj bo. Spodaj je tok za naročanje:</p>
     <ol class="steps">
       <li><span class="n">1</span><div><b>Nekdo predlaga restavracijo</b><div class="sub">Klik na <b>+ Predlagaj restavracijo</b>, izbira z Wolta (iskanje, filtri, predogled menija), datum in rok za naročila.</div></div></li>
       <li><span class="n">2</span><div><b>Vsak izbere svojo jed</b><div class="sub">V zavihku <b>Meni</b> klikneš jed, izbereš dodatke in količino. V košarici desno (na telefonu spodaj) vidiš, kaj naročajo sodelavci.</div></div></li>

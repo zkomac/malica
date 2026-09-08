@@ -11,6 +11,11 @@ from datetime import date
 from .domain import day_label, deadline_passed, find_day, is_wolt_url, money, text
 from .storage import _now
 
+def _append(state, day, summary):
+    state["days"].append(day)
+    return summary
+
+
 def handle_post(state, parts, body, who):
     """Vrne opis spremembe (za dnevnik) ali None, če pot ne obstaja."""
     if parts == ["api", "people"]:
@@ -36,28 +41,41 @@ def handle_post(state, parts, body, who):
         return "spremenil/a lokacijo na %s" % state["location"]["label"]
 
     if parts == ["api", "days"]:
-        restaurant = text(body.get("restaurant"))
-        if not restaurant:
-            raise ValueError("Restavracija je obvezna")
+        kind = body.get("kind") if body.get("kind") in ("order", "out", "poll") else "order"
         d = text(body.get("date")) or date.today().isoformat()
         if not re.match(r"^\d{4}-\d{2}-\d{2}$", d):
             raise ValueError("Neveljaven datum")
-        url = text(body.get("url"), 500)
-        if not is_wolt_url(url):
-            raise ValueError("Neveljavna povezava")
         venue = body.get("venue") if isinstance(body.get("venue"), dict) else None
         if venue and not is_wolt_url(text(venue.get("url"), 500)):
             venue["url"] = ""
+        url = text(body.get("url"), 500)
         day = {
-            "id": uuid.uuid4().hex[:8], "date": d, "restaurant": restaurant, "url": url,
+            "id": uuid.uuid4().hex[:8], "date": d, "kind": kind,
+            "restaurant": text(body.get("restaurant")),
+            "url": url if is_wolt_url(url) else "", "venue": venue,
             "proposedBy": text(body.get("proposedBy")), "deadline": text(body.get("deadline"), 40),
-            "venue": venue, "orderer": text(body.get("orderer") or body.get("proposedBy")),
             "status": "open", "orders": [],
             "fees": {"delivery": 0, "service": 0, "tip": 0, "discount": 0},
             "feeSplit": "proportional", "payer": "", "paid": [],
         }
-        state["days"].append(day)
-        return "predlagal/a %s" % day_label(day)
+        if kind == "order":
+            if not day["restaurant"]:
+                raise ValueError("Restavracija je obvezna")
+            if not is_wolt_url(url):
+                raise ValueError("Neveljavna povezava")
+            day["url"] = url
+            day["orderer"] = text(body.get("orderer") or body.get("proposedBy"))
+            return _append(state, day, "predlagal/a %s" % day_label(day))
+        if kind == "out":
+            if not day["restaurant"]:
+                raise ValueError("Kraj je obvezen")
+            day["outTime"] = text(body.get("outTime"), 20)
+            day["going"], day["skip"] = [], []
+            return _append(state, day, "predlagal/a: gremo ven — %s" % day["restaurant"])
+        # kind == poll
+        day["restaurant"] = day["restaurant"] or "Kaj danes jemo?"
+        day["poll"] = {"options": [], "closed": False}
+        return _append(state, day, "začel/a anketo: %s" % day["restaurant"])
 
     if len(parts) >= 3 and parts[:2] == ["api", "days"]:
         day = find_day(state, parts[2])
@@ -74,6 +92,15 @@ def handle_post(state, parts, body, who):
                 day["date"] = text(body["date"]); changes.append("datum")
             if "url" in body and is_wolt_url(text(body["url"], 500)):
                 day["url"] = text(body["url"], 500)
+            if body.get("kind") in ("order", "out", "poll") and body["kind"] != day.get("kind"):
+                day["kind"] = body["kind"]; changes.append("način")
+            if isinstance(body.get("venue"), dict):
+                vv = body["venue"]
+                if vv.get("url") and not is_wolt_url(text(vv.get("url"), 500)):
+                    vv["url"] = ""
+                day["venue"] = vv
+            if "outTime" in body:
+                day["outTime"] = text(body["outTime"], 20)
             if body.get("status") in ("open", "ordered") and body["status"] != day["status"]:
                 day["status"] = body["status"]; changes.append("zaključil/a naročilo" if body["status"] == "ordered" else "ponovno odprl/a")
             if body.get("feeSplit") in ("equal", "proportional"):
@@ -94,6 +121,91 @@ def handle_post(state, parts, body, who):
             state["days"] = [x for x in state["days"] if x["id"] != day["id"]]
             return "IZBRISAL/A dan %s z %d naročili" % (day_label(day), len(day["orders"]))
 
+        # -- eating out: attendance -------------------------------------
+        if action == "attend":
+            person = text(body.get("person"), 60)
+            if not person:
+                raise ValueError("Ime je obvezno")
+            if person not in state["people"]:
+                state["people"].append(person)
+            day.setdefault("going", [])
+            day.setdefault("skip", [])
+            day["going"] = [p for p in day["going"] if p != person]
+            day["skip"] = [p for p in day["skip"] if p != person]
+            if body.get("going") is True:
+                day["going"].append(person)
+            elif body.get("going") is False:
+                day["skip"].append(person)
+            return ""
+
+        # -- poll: options and votes ------------------------------------
+        if action.startswith("poll"):
+            poll = day.get("poll")
+            if not isinstance(poll, dict):
+                raise ValueError("Ta dan ni anketa")
+
+            if action == "poll-option":
+                if poll.get("closed"):
+                    raise ValueError("Anketa je zaključena")
+                label = text(body.get("label"), 80)
+                if not label:
+                    raise ValueError("Opis opcije je obvezen")
+                okind = body.get("optKind") if body.get("optKind") in ("order", "out") else "out"
+                if len(poll["options"]) >= 20:
+                    raise ValueError("Preveč opcij")
+                poll["options"].append({
+                    "id": uuid.uuid4().hex[:6], "label": label, "kind": okind,
+                    "by": text(body.get("person"), 60), "votes": [],
+                })
+                return "dodal/a v anketo: %s" % label
+
+            if action == "poll-option-delete":
+                oid = text(body.get("optionId"), 16)
+                poll["options"] = [o for o in poll["options"] if o["id"] != oid]
+                return ""
+
+            if action == "poll-vote":
+                if poll.get("closed"):
+                    raise ValueError("Anketa je zaključena")
+                person = text(body.get("person"), 60)
+                if not person:
+                    raise ValueError("Ime je obvezno")
+                if person not in state["people"]:
+                    state["people"].append(person)
+                oid = text(body.get("optionId"), 16)
+                for o in poll["options"]:
+                    o["votes"] = [v for v in o["votes"] if v != person]
+                if oid:
+                    tgt = next((o for o in poll["options"] if o["id"] == oid), None)
+                    if tgt:
+                        tgt["votes"].append(person)
+                return ""
+
+            if action == "poll-close":
+                if not poll["options"]:
+                    raise ValueError("Ni opcij za zaključek")
+                winner = max(poll["options"], key=lambda o: len(o["votes"]))
+                poll["closed"] = True
+                poll["winnerId"] = winner["id"]
+                day["kind"] = winner["kind"]
+                day["restaurant"] = winner["label"]
+                if winner["kind"] == "out":
+                    day.setdefault("going", [])
+                    day.setdefault("skip", [])
+                else:
+                    day.setdefault("orderer", winner.get("by", ""))
+                return "zaključil/a anketo — zmagal/a: %s" % winner["label"]
+
+            if action == "poll-reopen":
+                poll["closed"] = False
+                poll.pop("winnerId", None)
+                day["kind"] = "poll"
+                return "ponovno odprl/a anketo"
+
+            return None
+
+        if action in ("orders", "orders-delete") and day.get("kind", "order") != "order":
+            raise ValueError("Ta dan ni naročilo")
         if action in ("orders", "orders-delete") and day.get("status") == "ordered":
             raise ValueError("Naročilo je že zaključeno — najprej ga ponovno odpri")
         if action in ("orders", "orders-delete") and day.get("date") != _now().strftime("%Y-%m-%d"):

@@ -70,6 +70,7 @@ function renderOut(day) {
         ${day.outTime ? `<span>🕐 ${esc(day.outTime)}</span>` : ''}
         ${v.rating ? `<span>⭐ ${v.rating}</span>` : ''}
         ${(v.url || day.url) ? `<a href="${esc(v.url || day.url)}" target="_blank" rel="noopener">Wolt ↗</a>` : ''}
+        ${voteWidget(day)}
       </div></div>
       <div class="actions"><div class="dd"><button class="btn" data-act="daymenu">Načrt ▾</button>
         <div class="dd-menu" id="dayMenu">
@@ -186,4 +187,15 @@ function renderPoll(day) {
     </div>
     <button class="btn primary poll-close-btn" data-act="poll-close" ${poll.options.length ? '' : 'disabled'}>✓ Zaključi in izberi zmagovalca</button>`;
   return html;
+}
+
+// ---------- competing proposals ----------
+// When several proposals exist for the same date, each shows a thumbs-up; one vote
+// per person per day (voting elsewhere moves it). Polls keep their own voting.
+function voteWidget(day){
+  if(day.status!=='open' || (day.kind||'order')==='poll') return '';
+  const rivals = state.days.filter(d=>d.date===day.date && d.status==='open' && (d.kind||'order')!=='poll');
+  if(rivals.length<2) return '';
+  const votes = day.votes||[]; const mine = me && votes.includes(me);
+  return `<button class="btn sm votebtn ${mine?'voted':''}" data-act="dayvote" title="En glas na osebo — klik drugje ga prestavi">👍 ${mine?'Tvoj glas':'Za ta predlog'}${votes.length?` · ${votes.length}`:''}</button>`;
 }

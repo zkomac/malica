@@ -121,6 +121,21 @@ def handle_post(state, parts, body, who):
             state["days"] = [x for x in state["days"] if x["id"] != day["id"]]
             return "IZBRISAL/A dan %s z %d naročili" % (day_label(day), len(day["orders"]))
 
+        # -- more proposals for the same day: thumbs-up voting ----------
+        if action == "vote":
+            person = text(body.get("person"), 60)
+            if not person:
+                raise ValueError("Ime je obvezno")
+            if person not in state["people"]:
+                state["people"].append(person)
+            already = person in day.get("votes", [])
+            for d in state["days"]:
+                if d.get("date") == day.get("date"):
+                    d["votes"] = [v for v in d.get("votes", []) if v != person]
+            if not already:
+                day.setdefault("votes", []).append(person)
+            return ""
+
         # -- eating out: attendance -------------------------------------
         if action == "attend":
             person = text(body.get("person"), 60)

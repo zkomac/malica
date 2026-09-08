@@ -48,6 +48,7 @@ document.addEventListener('click', async e=>{
     if(r.error){ out.innerHTML=`<div class="banner" style="background:#fdecea;border-color:#f5c6c2"><div><b>✗ ${esc(r.error)}</b><div class="sub">Znesek lahko vpišeš tudi sam: Naročilo ▾ → Zaključi naročilo.</div></div></div>`; b.disabled=false; b.textContent='💶 Poskusi znova'; }
     else { out.innerHTML=`<div class="banner ok"><div><b>✓ Wolt: plačano ${fmt(r.total)}</b><div class="sub">jedi ${fmt(r.items)} · dostava ${fmt(r.delivery)}${r.tip?` · napitnina ${fmt(r.tip)}`:''} · ${esc(r.time||'')}</div></div></div>`; b.textContent='✓ Prebrano'; finishModal({...day, grandTotal:r.total, payer: day.payer||me}); }
   }
+  else if(t.dataset.act==='dayvote'){ if(!me){ welcomeModal(); return; } await mutate(`/api/days/${day.id}/vote`,{person:me}); }
   else if(t.dataset.act==='pickfor'){ if(!me){ welcomeModal(); return; } pickerModal(day.id); }
   else if(t.dataset.act==='attend'){ if(!me){ welcomeModal(); return; } await mutate(`/api/days/${day.id}/attend`,{person:me, going:t.dataset.going==='1'}); }
   else if(t.dataset.act==='out-bill'){ outBillModal(day); }

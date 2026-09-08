@@ -207,6 +207,20 @@ class MalicaTests(unittest.TestCase):
         code, j = self.c.post("/api/days", {"kind": "out", "restaurant": ""})
         self.assertEqual(code, 400)
 
+    # -- competing proposals ----------------------------------------------
+    def test_day_vote_single_per_date(self):
+        self._login()
+        d1 = self._day(restaurant="Pinsarna")
+        d2 = self._day(restaurant="Skleda")
+        code, j = self.c.post("/api/days/%s/vote" % d1["id"], {"person": "Ana"})
+        self.assertEqual([x["votes"] for x in j["days"]], [["Ana"], []])
+        # voting for the other proposal moves the vote
+        code, j = self.c.post("/api/days/%s/vote" % d2["id"], {"person": "Ana"})
+        self.assertEqual([sorted(x.get("votes", [])) for x in j["days"]], [[], ["Ana"]])
+        # voting again on the same one retracts it
+        code, j = self.c.post("/api/days/%s/vote" % d2["id"], {"person": "Ana"})
+        self.assertEqual([x.get("votes", []) for x in j["days"]], [[], []])
+
     # -- poll --------------------------------------------------------------
     def test_poll_flow(self):
         self._login()

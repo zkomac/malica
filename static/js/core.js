@@ -16,7 +16,7 @@ const deadlinePassed = d => { const m=/^(\d{1,2}):(\d{2})$/.exec(d.deadline||'')
 const serverToday = () => state.today || todayIso();
 const isToday = d => d.date===serverToday();
 const canOrder = d => d.status==='open' && isToday(d) && !deadlinePassed(d);
-const defaultDeadline = (iso) => { if(iso && iso!==todayIso()) return '11:00'; const n=new Date(); if(n.getHours()<11) return '11:00'; const t=new Date(n.getTime()+60*60000); t.setMinutes(t.getMinutes()<30?30:0); if(t.getMinutes()===0) t.setHours(t.getHours()+1); return `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`; };
+const defaultDeadline = (iso) => { if(iso && iso!==todayIso()) return '11:00'; const n=new Date(); if(n.getHours()<11) return '11:00'; const t=new Date(n.getTime()+60*60000); t.setMinutes(t.getMinutes()<30?30:0); if(t.getMinutes()===0) t.setHours(t.getHours()+1); if(t.getDate()!==n.getDate()) return ''; return `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`; };
 const todayIso = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 
 let state = {people:[], days:[], location:{label:''}};

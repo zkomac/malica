@@ -10,9 +10,9 @@ function startModal() {
   openModal(`<div class="body"><h2>Kaj danes?</h2>
     <p class="desc">Izberi, kako se ekipa danes odloči.</p>
     <div class="start-grid">
-      <button class="start-card" data-start="order"><span class="ic">🍽</span><b>Naročamo na Wolt</b><small>Vsak izbere jed, eden naroči, Malica razdeli strošek.</small></button>
-      <button class="start-card" data-start="out"><span class="ic">🚶</span><b>Gremo ven</b><small>Kraj in ura, vsak potrdi, ali gre zraven.</small></button>
-      <button class="start-card" data-start="poll"><span class="ic">🗳</span><b>Naj ekipa odloči</b><small>Anketa: predlagaj opcije, vsi glasujejo.</small></button>
+      <button class="start-card" data-start="order"><span class="ic">🍽</span><b>Že odločeno: naročamo na Wolt</b><small>Vsak izbere jed, eden naroči, Malica razdeli strošek.</small></button>
+      <button class="start-card" data-start="out"><span class="ic">🚶</span><b>Že odločeno: gremo ven</b><small>Kraj in ura, vsak potrdi, ali gre zraven.</small></button>
+      <button class="start-card" data-start="poll"><span class="ic">🗳</span><b>Anketa — naj se sodelavci odločijo</b><small>Predlagaj opcije, vsi glasujejo; zmagovalec postane načrt.</small></button>
     </div></div>`);
   $('.modal').addEventListener('click', e => {
     const b = e.target.closest('[data-start]'); if (!b) return;

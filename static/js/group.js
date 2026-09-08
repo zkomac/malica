@@ -129,22 +129,23 @@ function outBillModal(day) {
 
 // ---------- poll ----------
 function pollCreateModal() {
+  pollVenuePick = null;
   openModal(`<div class="body"><h2>🗳 Nova anketa</h2>
     <p class="desc">Vprašaj ekipo. Opcije lahko doda vsak; ti dodaš prvo.</p>
     <form id="pollForm">
       <div class="opt"><label>Vprašanje</label><input name="q" maxlength="80" value="Kaj danes jemo?"></div>
-      <div class="opt"><label>Prva opcija (neobvezno)</label>
+      <div class="opt sugwrap"><label>Prva opcija (neobvezno)</label>
         <div class="seg" id="pcSeg"><button type="button" class="seg-btn active" data-optkind="out">🚶 Ven</button><button type="button" class="seg-btn" data-optkind="order">🍽 Naročamo</button></div>
-        <input name="opt" maxlength="80" placeholder="npr. Foculus / Pizza Wolt" style="margin-top:6px">
+        <input name="opt" class="sug-input" maxlength="80" autocomplete="off" placeholder="npr. Foculus / Pizza Wolt" style="margin-top:6px">
+        <div class="poll-sug"></div><div class="sub sug-note"></div>
       </div>
     </form></div>
     <div class="foot"><button class="btn primary" id="pollSave">Začni anketo</button></div>`);
-  $('#pcSeg').addEventListener('click', e => { const b = e.target.closest('.seg-btn'); if (!b) return; $('#pcSeg').querySelectorAll('.seg-btn').forEach(x => x.classList.toggle('active', x === b)); });
   $('#pollSave').addEventListener('click', async () => {
     const b = Object.fromEntries(new FormData($('#pollForm'))); $('#pollSave').disabled = true;
     let s; try { s = await mutate('/api/days', { kind: 'poll', restaurant: b.q, proposedBy: me }); } catch (e) { const x = $('#pollSave'); if (x) x.disabled = false; return; }
     const id = s.days[s.days.length - 1].id; currentDayId = id; localStorage.setItem('wolt.day', id);
-    if (b.opt && b.opt.trim()) { const kind = $('#pcSeg .seg-btn.active').dataset.optkind; try { await mutate(`/api/days/${id}/poll-option`, { label: b.opt.trim(), optKind: kind, person: me }); } catch (e) {} }
+    if (b.opt && b.opt.trim()) { const kind = $('#pcSeg .seg-btn.active').dataset.optkind; try { await mutate(`/api/days/${id}/poll-option`, { label: b.opt.trim(), optKind: kind, person: me, url: pollVenuePick ? pollVenuePick.url : '', venue: pollVenuePick || null }); } catch (e) {} pollVenuePick = null; }
     closeModal(); render(); toast('✓ Anketa začeta');
   });
 }
@@ -180,10 +181,10 @@ function renderPoll(day) {
   }
   html += `</div>
     <div class="card" style="margin-top:14px"><h3>Dodaj opcijo</h3>
-      <div class="poll-add">
+      <div class="poll-add sugwrap">
         <div class="seg" id="pollSeg"><button type="button" class="seg-btn active" data-optkind="out">🚶 Ven</button><button type="button" class="seg-btn" data-optkind="order">🍽 Naročamo</button></div>
-        <div class="row2"><input id="pollOptLabel" maxlength="80" autocomplete="off" placeholder="npr. Foculus / burek / Pizza Wolt"><button class="btn primary" data-act="poll-add">+ Dodaj</button></div>
-        <div class="poll-sug" id="pollSug"></div><div class="sub" id="pollPicked"></div>
+        <div class="row2"><input id="pollOptLabel" class="sug-input" maxlength="80" autocomplete="off" placeholder="npr. Foculus / burek / Pizza Wolt"><button class="btn primary" data-act="poll-add">+ Dodaj</button></div>
+        <div class="poll-sug"></div><div class="sub sug-note"></div>
       </div>
     </div>
     <button class="btn primary poll-close-btn" data-act="poll-close" ${poll.options.length ? '' : 'disabled'}>✓ Zaključi in izberi zmagovalca</button>`;
@@ -213,14 +214,16 @@ function votePanel(rivals){
     <div class="poll">${opts}</div></div>`;
 }
 
-// Wolt autocomplete for poll options: with "Naročamo" selected, typing searches the
-// same venue list as the restaurant picker, so the winning option already carries
-// the venue (menu opens right after the poll closes).
+// Wolt autocomplete for poll options (both the poll view and the create dialog):
+// with "Naročamo" selected, typing searches the same venue list as the restaurant
+// picker; a picked suggestion attaches the venue, so the winning option opens
+// straight into the restaurant's menu.
 let pollVenuePick = null;
-function pollPickNote(){ const m = $('#pollPicked'); if(m) m.textContent = pollVenuePick ? '✓ Restavracija z Wolta — ob zmagi se takoj odpre njen meni.' : ''; }
-async function pollSuggest(){
-  const box = $('#pollSug'), inp = $('#pollOptLabel'); if(!box || !inp) return;
-  const seg = $('#pollSeg .seg-btn.active'); const q = inp.value.trim();
+async function woltSuggest(wrap){
+  const inp = wrap.querySelector('.sug-input'), box = wrap.querySelector('.poll-sug');
+  const seg = wrap.querySelector('.seg-btn.active');
+  if(!inp || !box) return;
+  const q = inp.value.trim();
   if(!seg || seg.dataset.optkind !== 'order' || q.length < 2){ box.innerHTML = ''; return; }
   if(!venuesCache){ try{ venuesCache = await api('/api/wolt/venues', null, true); }catch(e){ return; } }
   const vs = (venuesCache.venues||[]).filter(v => matches(q, v.name)).slice(0, 6);
@@ -228,14 +231,19 @@ async function pollSuggest(){
     ${v.image?`<img src="${esc(img(v.image,80))}" alt="">`:''}<span>${esc(v.name)}</span>${v.rating?`<span class="sub">⭐ ${v.rating}</span>`:''}${v.online===false?'<span class="sub">zaprto</span>':''}</button>`).join('');
 }
 document.addEventListener('input', e => {
-  if(e.target.id !== 'pollOptLabel') return;
-  pollVenuePick = null; pollPickNote(); pollSuggest();
+  const wrap = e.target.closest('.sugwrap');
+  if(!wrap || !e.target.classList.contains('sug-input')) return;
+  pollVenuePick = null; const n = wrap.querySelector('.sug-note'); if(n) n.textContent = '';
+  woltSuggest(wrap);
 });
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-sugslug]');
-  if(!b){ if(!e.target.closest('.poll-add')) { const x=$('#pollSug'); if(x) x.innerHTML=''; } return; }
+  if(!b){ if(!e.target.closest('.sugwrap')){ document.querySelectorAll('.sugwrap .poll-sug').forEach(x => x.innerHTML=''); } return; }
+  const wrap = b.closest('.sugwrap');
   const v = (venuesCache && venuesCache.venues || []).find(x => (x.slug||x.name) === b.dataset.sugslug);
-  if(!v) return;
-  pollVenuePick = v; const inp = $('#pollOptLabel'); if(inp) inp.value = v.name;
-  const box = $('#pollSug'); if(box) box.innerHTML = ''; pollPickNote();
+  if(!v || !wrap) return;
+  pollVenuePick = v;
+  wrap.querySelector('.sug-input').value = v.name;
+  wrap.querySelector('.poll-sug').innerHTML = '';
+  const n = wrap.querySelector('.sug-note'); if(n) n.textContent = '✓ Restavracija z Wolta — ob zmagi se takoj odpre njen meni.';
 });

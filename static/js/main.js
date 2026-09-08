@@ -10,7 +10,7 @@ $('#meSelect').addEventListener('change', async e=>{
 $('#locBtn').addEventListener('click', locationModal);
 $('#helpBtn').addEventListener('click', helpModal);
 
-document.addEventListener('click', e=>{ const sb=e.target.closest('.seg-btn'); if(sb && sb.closest('.seg')){ sb.closest('.seg').querySelectorAll('.seg-btn').forEach(x=>x.classList.toggle('active',x===sb)); if(typeof pollSuggest==='function') pollSuggest(); } });
+document.addEventListener('click', e=>{ const sb=e.target.closest('.seg-btn'); if(sb && sb.closest('.seg')){ sb.closest('.seg').querySelectorAll('.seg-btn').forEach(x=>x.classList.toggle('active',x===sb)); const w=sb.closest('.sugwrap'); if(w && typeof woltSuggest==='function'){ pollVenuePick=null; const n=w.querySelector('.sug-note'); if(n) n.textContent=''; woltSuggest(w); } } });
 document.addEventListener('click', async e=>{
   if(!e.target.closest('[data-act="daymenu"]')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
   if(e.target.closest('[data-close]') || (e.target.classList.contains('backdrop'))) { closeModal(); return; }

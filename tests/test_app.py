@@ -176,6 +176,78 @@ class MalicaTests(unittest.TestCase):
         self.assertEqual(code, 200)
         self.assertIn("id=\"main\"", html)
 
+    # -- eating out --------------------------------------------------------
+    def test_out_day_attendance_and_split(self):
+        self._login()
+        code, j = self.c.post("/api/days", {"kind": "out", "restaurant": "Foculus", "outTime": "12:30", "proposedBy": "Ana"})
+        self.assertEqual(code, 200, j)
+        day = j["days"][-1]
+        self.assertEqual(day["kind"], "out")
+        self.assertEqual(day["going"], [])
+        code, j = self.c.post("/api/days/%s/attend" % day["id"], {"person": "Ana", "going": True})
+        code, j = self.c.post("/api/days/%s/attend" % day["id"], {"person": "Marko", "going": True})
+        code, j = self.c.post("/api/days/%s/attend" % day["id"], {"person": "Nina", "going": False})
+        d = j["days"][0]
+        self.assertEqual(sorted(d["going"]), ["Ana", "Marko"])
+        self.assertEqual(d["skip"], ["Nina"])
+        # toggling switches sides, never duplicates
+        code, j = self.c.post("/api/days/%s/attend" % day["id"], {"person": "Nina", "going": True})
+        d = j["days"][0]
+        self.assertEqual(sorted(d["going"]), ["Ana", "Marko", "Nina"])
+        self.assertEqual(d["skip"], [])
+        # optional shared bill reuses the split fields
+        code, j = self.c.post("/api/days/%s" % day["id"], {"grandTotal": 45.0, "payer": "Ana"})
+        self.assertAlmostEqual(j["days"][0]["grandTotal"], 45.0)
+        # out day rejects order endpoints
+        code, j = self.c.post("/api/days/%s/orders" % day["id"], {"person": "Ana", "item": "X", "price": 1})
+        self.assertEqual(code, 400)
+
+    def test_out_requires_place(self):
+        self._login()
+        code, j = self.c.post("/api/days", {"kind": "out", "restaurant": ""})
+        self.assertEqual(code, 400)
+
+    # -- poll --------------------------------------------------------------
+    def test_poll_flow(self):
+        self._login()
+        code, j = self.c.post("/api/days", {"kind": "poll", "restaurant": "Kaj danes?", "proposedBy": "Ana"})
+        self.assertEqual(code, 200, j)
+        day = j["days"][-1]
+        self.assertEqual(day["kind"], "poll")
+        self.assertFalse(day["poll"]["closed"])
+        code, j = self.c.post("/api/days/%s/poll-option" % day["id"], {"label": "Naročamo Wolt", "optKind": "order", "person": "Ana"})
+        code, j = self.c.post("/api/days/%s/poll-option" % day["id"], {"label": "Foculus", "optKind": "out", "person": "Marko"})
+        opts = j["days"][0]["poll"]["options"]
+        self.assertEqual(len(opts), 2)
+        wolt_id, out_id = opts[0]["id"], opts[1]["id"]
+        # votes: 2 for out, 1 for order
+        self.c.post("/api/days/%s/poll-vote" % day["id"], {"optionId": out_id, "person": "Marko"})
+        self.c.post("/api/days/%s/poll-vote" % day["id"], {"optionId": out_id, "person": "Nina"})
+        code, j = self.c.post("/api/days/%s/poll-vote" % day["id"], {"optionId": wolt_id, "person": "Ana"})
+        opts = {o["id"]: o["votes"] for o in j["days"][0]["poll"]["options"]}
+        self.assertEqual(sorted(opts[out_id]), ["Marko", "Nina"])
+        # re-vote moves the vote, never double-counts
+        code, j = self.c.post("/api/days/%s/poll-vote" % day["id"], {"optionId": out_id, "person": "Ana"})
+        opts = {o["id"]: o["votes"] for o in j["days"][0]["poll"]["options"]}
+        self.assertEqual(opts[wolt_id], [])
+        self.assertEqual(sorted(opts[out_id]), ["Ana", "Marko", "Nina"])
+        # close -> winner (out: Foculus) becomes the plan
+        code, j = self.c.post("/api/days/%s/poll-close" % day["id"], {})
+        d = j["days"][0]
+        self.assertTrue(d["poll"]["closed"])
+        self.assertEqual(d["kind"], "out")
+        self.assertEqual(d["restaurant"], "Foculus")
+        # cannot vote on a closed poll
+        code, j = self.c.post("/api/days/%s/poll-vote" % day["id"], {"optionId": out_id, "person": "Ana"})
+        self.assertEqual(code, 400)
+
+    def test_poll_close_needs_options(self):
+        self._login()
+        code, j = self.c.post("/api/days", {"kind": "poll"})
+        day = j["days"][-1]
+        code, j = self.c.post("/api/days/%s/poll-close" % day["id"], {})
+        self.assertEqual(code, 400)
+
     # -- wolt helpers ------------------------------------------------------
     def test_basket_only_for_orderer(self):
         self._login()
@@ -220,6 +292,49 @@ class MalicaTests(unittest.TestCase):
         self.assertTrue(j["versions"])
         code, j = self.c.post("/api/admin/group/%s/restore" % gid, {"version": "../../etc"}, headers=H)
         self.assertEqual(code, 404)
+
+    # -- self-service groups ----------------------------------------------
+    def test_newgroup_creates_and_logs_in(self):
+        code, _ = self.c.request("POST", "/newgroup", form={"name": "Ekipa X", "pin": "4321"})
+        self.assertIn("malica_g", self.c.cookies)
+        code, j = self.c.get("/api/state")
+        self.assertEqual(code, 200)
+        gid = storage.group_by_pin("4321")["id"]
+        self.assertEqual(gid, "ekipa-x")
+
+    def test_newgroup_validation_and_duplicate_pin(self):
+        code, html = self.c.request("POST", "/newgroup", form={"name": "", "pin": "12"})
+        self.assertNotIn("malica_g", self.c.cookies)
+        self.assertIn("4–8", html)
+        code, html = self.c.request("POST", "/newgroup", form={"name": "Dvojnik", "pin": "0000"})
+        self.assertIn("že uporablja", html)
+
+    def test_newgroup_rate_limited_per_ip(self):
+        from malica import web
+        web._NEWGROUP_IP.clear()
+        for i in range(3):
+            c = Client()
+            c.request("POST", "/newgroup", form={"name": "G%d" % i, "pin": str(7000 + i)})
+        c = Client()
+        code, html = c.request("POST", "/newgroup", form={"name": "G9", "pin": "7999"})
+        self.assertNotIn("malica_g", c.cookies)
+        self.assertIn("poskusi čez", html)
+        web._NEWGROUP_IP.clear()
+
+    def test_admin_delete_group_soft(self):
+        self._login()
+        code, j = self.c.post("/api/admin/login", {"pin": "1234"})
+        H = {"X-Admin": j["token"]}
+        code, j = self.c.post("/api/admin/groups", {"name": "Zacasna", "pin": "5555"}, headers=H)
+        gid = j["id"]
+        code, j = self.c.post("/api/admin/group/%s/delete" % gid, {}, headers=H)
+        self.assertEqual(code, 200)
+        self.assertIsNone(storage.find_group(gid))
+        trash = os.path.join(config.DATA_DIR, "trash")
+        self.assertTrue(any(d.startswith(gid + "-") for d in os.listdir(trash)))
+        # brez admin žetona brisanje ni mogoče
+        code, j = self.c.post("/api/admin/group/proplus/delete", {})
+        self.assertEqual(code, 403)
 
     # -- static / safety ---------------------------------------------------
     def test_static_and_traversal(self):

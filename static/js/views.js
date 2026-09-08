@@ -16,10 +16,14 @@ function render(){
   const pastCount = state.days.filter(d=>grp(d)===2).length;
   if(!currentDayId || !state.days.find(d=>d.id===currentDayId)) currentDayId = days[0]?.id || state.days[0]?.id || null;
   const chip = d => `<div class="day g${grp(d)} ${d.id===currentDayId?'active':''}" data-day="${d.id}">
-      <button class="delchip" data-delday="${d.id}" title="Izbriši dan">×</button><em class="tag-g g${grp(d)}">${grp(d)===0?'Danes':(relDay(d.date)||'Prihodnje')}</em><b>${esc(d.restaurant)}</b><span><i class="st ${d.status}"></i>${dateSl(d.date)} · ${chipMeta(d)}${(d.votes&&d.votes.length&&d.status==='open')?` · 👍 ${d.votes.length}`:''}</span></div>`;
+      <button class="delchip" data-delday="${d.id}" title="Izbriši dan">×</button><em class="tag-g g${grp(d)}">${grp(d)===0?'Danes':(relDay(d.date)||'Prihodnje')}</em>${kindTag(d)}<b>${esc(d.restaurant)}</b><span><i class="st ${d.status}"></i>${dateSl(d.date)} · ${chipMeta(d)}${(d.votes&&d.votes.length&&d.status==='open')?` · 👍 ${d.votes.length}`:''}</span></div>`;
+  const kindTag = d => { const k=d.kind||'order';
+    if(k==='poll' && !(d.poll&&d.poll.closed)) return '<em class="tag-k k-poll">🗳 anketa</em>';
+    if(k==='out') return '<em class="tag-k k-out">🚶 gremo ven</em>';
+    return '<em class="tag-k k-order">🛵 Wolt</em>'; };
   const chipMeta = d => { const k=d.kind||'order';
-    if(k==='poll' && !(d.poll&&d.poll.closed)) return '🗳 anketa';
-    if(k==='out') return '🚶 ven · '+((d.going||[]).length)+' gre';
+    if(k==='poll' && !(d.poll&&d.poll.closed)){ const n=(d.poll&&d.poll.options||[]).reduce((a,o)=>a+o.votes.length,0); return n+' '+plural(n,'glas','glasova','glasovi','glasov'); }
+    if(k==='out') return ((d.going||[]).length)+' gre';
     return nOrders(d.orders.length); };
   const todays = days.filter(d=>grp(d)===0), future = days.filter(d=>grp(d)===1);
   $('#days').innerHTML = `<div class="day add" data-new><b>+ Predlagaj</b><span>za danes, ${dateSl(todayIso())}</span></div>` + todays.map(chip).join('')
@@ -30,7 +34,7 @@ function render(){
   const todayDay = state.days.find(d=>d.date===todayIso());
   const banner = todayDay || !state.days.length ? '' : `<div class="banner"><div><b>Danes, ${dateSl(todayIso()).replace(/^[^,]+, /,'')} še ni predloga.</b><div class="sub">Naročite na Wolt, pojdite ven — ali pa daj na glasovanje.</div></div><button class="btn primary" data-new>🍽 Kaj bo danes za malico?</button></div>`;
   const rivals = todays.filter(d=>(d.kind||'order')!=='poll' && d.status==='open');
-  const multi = day && day.date===T && rivals.length>1 ? `<div class="banner"><div><b>Danes: ${rivals.length} ${plural(rivals.length,'predlog','predloga','predlogi','predlogov')}.</b><div class="sub">Preklapljaj med njimi zgoraj in klikni 👍 pri tistem, ki bi ga izbral. Zmaga tisti z največ glasovi.</div></div></div>` : '';
+  const multi = day && day.date===T && rivals.length>1 ? votePanel(rivals) : '';
   $('#main').innerHTML = banner + multi + (day ? renderDay(day) : `<div class="empty"><h2>Za danes še nihče ni nič predlagal</h2><p>Naročite prek Wolta, pojdite ven na malico — ali pa z anketo vprašaj sodelavce, kaj jim paše.</p><button class="btn primary" data-new>🍽 Kaj bo danes za malico?</button></div>`);
   if(day && tab==='menu' && day.venue?.slug) renderMenu(day);
   if(day && tab==='summary' && $('#woltStatus')) extCall({type:'status'}).then(st=>{ const el=$('#woltStatus'); if(!el) return;
@@ -53,6 +57,7 @@ function renderDay(day){
     <div style="min-width:0">
       <h1>${esc(day.restaurant)}</h1>
       <div class="meta">
+        <span class="tag-k k-order">🛵 naročamo na Wolt</span>
         <span class="status ${day.status} ${late?'late':''}">${day.status==='ordered'?'✓ Naročeno':late?'⏰ Rok potekel':future?'📅 Predlog':past?'Preteklo':'● Odprto'}</span>
         <span>${dateLong(day.date)}</span>
         ${day.deadline?`<span>⏰ ${esc(day.deadline)}</span>`:''}
@@ -60,7 +65,7 @@ function renderDay(day){
         ${v.estimate?`<span>🛵 ${esc(v.estimate)}′</span>`:''}
         ${(v.url||day.url)?`<a href="${esc(v.url||day.url)}" target="_blank" rel="noopener">Wolt ↗</a>`:''}
         ${late?`<button class="btn sm" data-act="editday">⏰ Podaljšaj rok</button>`:''}
-        ${voteWidget(day)}
+        ${day.poll && day.poll.closed ? `<span title="Ta načrt je zmagal v anketi">🗳 izbrano z anketo</span>` : ''}
       </div>
       <div class="meta orderer-row"><span>🛵 Naroča:</span>
         <select class="inline-sel" data-orderer ${!open?'disabled':''}><option value="">— kdo naroča? —</option>${state.people.map(p=>`<option ${day.orderer===p?'selected':''}>${esc(p)}</option>`).join('')}</select>

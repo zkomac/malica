@@ -17,7 +17,7 @@ document.addEventListener('click', async e=>{
   const sc = e.target.closest('[data-scroll]'); if(sc){ document.getElementById(sc.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   const pt = e.target.closest('[data-paid-toggle]'); if(pt){ const day=curDay(); const paid=new Set(day.paid); paid.has(pt.dataset.paidToggle)?paid.delete(pt.dataset.paidToggle):paid.add(pt.dataset.paidToggle); await mutate(`/api/days/${day.id}`,{paid:[...paid]}); return; }
   const dd = e.target.closest('[data-delday]'); if(dd){ e.stopPropagation(); const d=state.days.find(x=>x.id===dd.dataset.delday); if(d && confirm(`Izbrišem restavracijo ${d.restaurant} (${dateSl(d.date)})${d.orders.length?` skupaj z ${nOrders(d.orders.length)}`:''}? Tega ni mogoče razveljaviti (admin lahko obnovi prejšnjo različico).`)){ await mutate(`/api/days/${d.id}/delete`,{}); toast('Dan izbrisan'); } return; }
-  const t = e.target.closest('[data-new],[data-day],[data-tab],[data-act],[data-edit],[data-delorder],[data-item],[data-focustab],[data-pollvote],[data-pollremove]');
+  const t = e.target.closest('[data-new],[data-day],[data-tab],[data-act],[data-edit],[data-delorder],[data-item],[data-focustab],[data-pollvote],[data-pollremove],[data-dayvote]');
   if(!t) return;
   const day = curDay();
   if(t.dataset.new!==undefined){ startModal(); }
@@ -48,7 +48,7 @@ document.addEventListener('click', async e=>{
     if(r.error){ out.innerHTML=`<div class="banner" style="background:#fdecea;border-color:#f5c6c2"><div><b>✗ ${esc(r.error)}</b><div class="sub">Znesek lahko vpišeš tudi sam: Naročilo ▾ → Zaključi naročilo.</div></div></div>`; b.disabled=false; b.textContent='💶 Poskusi znova'; }
     else { out.innerHTML=`<div class="banner ok"><div><b>✓ Wolt: plačano ${fmt(r.total)}</b><div class="sub">jedi ${fmt(r.items)} · dostava ${fmt(r.delivery)}${r.tip?` · napitnina ${fmt(r.tip)}`:''} · ${esc(r.time||'')}</div></div></div>`; b.textContent='✓ Prebrano'; finishModal({...day, grandTotal:r.total, payer: day.payer||me}); }
   }
-  else if(t.dataset.act==='dayvote'){ if(!me){ welcomeModal(); return; } await mutate(`/api/days/${day.id}/vote`,{person:me}); }
+  else if(t.dataset.dayvote){ if(!me){ welcomeModal(); return; } await mutate(`/api/days/${t.dataset.dayvote}/vote`,{person:me}); }
   else if(t.dataset.act==='pickfor'){ if(!me){ welcomeModal(); return; } pickerModal(day.id); }
   else if(t.dataset.act==='attend'){ if(!me){ welcomeModal(); return; } await mutate(`/api/days/${day.id}/attend`,{person:me, going:t.dataset.going==='1'}); }
   else if(t.dataset.act==='out-bill'){ outBillModal(day); }

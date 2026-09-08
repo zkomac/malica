@@ -70,7 +70,7 @@ function renderOut(day) {
         ${day.outTime ? `<span>🕐 ${esc(day.outTime)}</span>` : ''}
         ${v.rating ? `<span>⭐ ${v.rating}</span>` : ''}
         ${(v.url || day.url) ? `<a href="${esc(v.url || day.url)}" target="_blank" rel="noopener">Wolt ↗</a>` : ''}
-        ${voteWidget(day)}
+        ${day.poll && day.poll.closed ? `<span title="Ta načrt je zmagal v anketi">🗳 izbrano z anketo</span>` : ''}
       </div></div>
       <div class="actions"><div class="dd"><button class="btn" data-act="daymenu">Načrt ▾</button>
         <div class="dd-menu" id="dayMenu">
@@ -190,12 +190,24 @@ function renderPoll(day) {
 }
 
 // ---------- competing proposals ----------
-// When several proposals exist for the same date, each shows a thumbs-up; one vote
-// per person per day (voting elsewhere moves it). Polls keep their own voting.
-function voteWidget(day){
-  if(day.status!=='open' || (day.kind||'order')==='poll') return '';
-  const rivals = state.days.filter(d=>d.date===day.date && d.status==='open' && (d.kind||'order')!=='poll');
-  if(rivals.length<2) return '';
-  const votes = day.votes||[]; const mine = me && votes.includes(me);
-  return `<button class="btn sm votebtn ${mine?'voted':''}" data-act="dayvote" title="En glas na osebo — klik drugje ga prestavi">👍 ${mine?'Tvoj glas':'Za ta predlog'}${votes.length?` · ${votes.length}`:''}</button>`;
+// Two or more proposals for the same date render as a mini-poll above the day view:
+// tap a card to back it (one vote per person per date, tap again to retract),
+// "Poglej" switches to that proposal without voting. Real polls are excluded.
+function votePanel(rivals){
+  const maxV = Math.max(1, ...rivals.map(d => (d.votes||[]).length));
+  const opts = rivals.map(d => {
+    const votes = d.votes||[]; const mine = me && votes.includes(me);
+    const icon = (d.kind||'order')==='out' ? '<em class="tag-k k-out">🚶 ven</em>' : '<em class="tag-k k-order">🛵 Wolt</em>';
+    const cur = d.id===currentDayId;
+    return `<div class="poll-opt ${mine?'mine':''}" data-dayvote="${d.id}">
+      <div class="poll-bar" style="width:${Math.round(votes.length/maxV*100)}%"></div>
+      <span class="poll-radio">${mine?'●':'○'}</span>
+      <span class="poll-label">${icon} ${esc(d.restaurant)}${(d.kind||'order')==='out'&&d.outTime?` <span class="sub">ob ${esc(d.outTime)}</span>`:''}${votes.length?`<div class="sub">glasovali: ${votes.map(esc).join(', ')}</div>`:''}</span>
+      <span class="poll-count">${votes.length}</span>
+      ${cur?'':`<button class="btn sm ghost" data-day="${d.id}">Poglej ›</button>`}
+    </div>`;
+  }).join('');
+  return `<div class="card votepanel"><h3>🗳 Danes: ${rivals.length} ${plural(rivals.length,'predlog','predloga','predlogi','predlogov')} — kateri ti paše?</h3>
+    <p class="sub" style="margin:-4px 0 10px">Tapni svojega favorita (glas lahko kadar koli prestaviš). Obvelja tisti z največ glasovi.</p>
+    <div class="poll">${opts}</div></div>`;
 }

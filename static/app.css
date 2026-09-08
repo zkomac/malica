@@ -321,4 +321,15 @@
 .seg-btn.active{background:var(--blue);color:#fff;font-weight:600}
 
 /* competing proposals */
-.votebtn.voted{background:var(--blue);color:#fff;border-color:var(--blue)}
+.votepanel{margin-bottom:14px;border-color:#cfeaf7;background:#f7fcfe}
+.votepanel .poll-opt{background:var(--bg)}
+
+/* kind tags */
+.tag-k{display:inline-block;font-style:normal;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 7px;border-radius:999px;margin:0 0 3px 4px;vertical-align:middle;white-space:nowrap}
+.k-order{background:#e6f5fc;color:#0085bd}
+.k-out{background:#e3f6eb;color:#0f6e3a}
+.k-poll{background:#f1e9fd;color:#6d28d9}
+.venue-head .meta .tag-k{margin-left:0;font-size:.68rem}
+.poll-label .tag-k{margin:0 6px 0 0}
+.votepanel .poll-opt{flex-wrap:wrap}
+.votepanel .poll-opt .btn{flex:0 0 auto;margin-left:auto}

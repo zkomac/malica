@@ -182,7 +182,8 @@ function renderPoll(day) {
     <div class="card" style="margin-top:14px"><h3>Dodaj opcijo</h3>
       <div class="poll-add">
         <div class="seg" id="pollSeg"><button type="button" class="seg-btn active" data-optkind="out">🚶 Ven</button><button type="button" class="seg-btn" data-optkind="order">🍽 Naročamo</button></div>
-        <div class="row2"><input id="pollOptLabel" maxlength="80" placeholder="npr. Foculus / burek / Pizza Wolt"><button class="btn primary" data-act="poll-add">+ Dodaj</button></div>
+        <div class="row2"><input id="pollOptLabel" maxlength="80" autocomplete="off" placeholder="npr. Foculus / burek / Pizza Wolt"><button class="btn primary" data-act="poll-add">+ Dodaj</button></div>
+        <div class="poll-sug" id="pollSug"></div><div class="sub" id="pollPicked"></div>
       </div>
     </div>
     <button class="btn primary poll-close-btn" data-act="poll-close" ${poll.options.length ? '' : 'disabled'}>✓ Zaključi in izberi zmagovalca</button>`;
@@ -211,3 +212,30 @@ function votePanel(rivals){
     <p class="sub" style="margin:-4px 0 10px">Tapni svojega favorita (glas lahko kadar koli prestaviš). Obvelja tisti z največ glasovi.</p>
     <div class="poll">${opts}</div></div>`;
 }
+
+// Wolt autocomplete for poll options: with "Naročamo" selected, typing searches the
+// same venue list as the restaurant picker, so the winning option already carries
+// the venue (menu opens right after the poll closes).
+let pollVenuePick = null;
+function pollPickNote(){ const m = $('#pollPicked'); if(m) m.textContent = pollVenuePick ? '✓ Restavracija z Wolta — ob zmagi se takoj odpre njen meni.' : ''; }
+async function pollSuggest(){
+  const box = $('#pollSug'), inp = $('#pollOptLabel'); if(!box || !inp) return;
+  const seg = $('#pollSeg .seg-btn.active'); const q = inp.value.trim();
+  if(!seg || seg.dataset.optkind !== 'order' || q.length < 2){ box.innerHTML = ''; return; }
+  if(!venuesCache){ try{ venuesCache = await api('/api/wolt/venues', null, true); }catch(e){ return; } }
+  const vs = (venuesCache.venues||[]).filter(v => matches(q, v.name)).slice(0, 6);
+  box.innerHTML = vs.map(v => `<button type="button" class="poll-sug-item" data-sugslug="${esc(v.slug||v.name)}">
+    ${v.image?`<img src="${esc(img(v.image,80))}" alt="">`:''}<span>${esc(v.name)}</span>${v.rating?`<span class="sub">⭐ ${v.rating}</span>`:''}${v.online===false?'<span class="sub">zaprto</span>':''}</button>`).join('');
+}
+document.addEventListener('input', e => {
+  if(e.target.id !== 'pollOptLabel') return;
+  pollVenuePick = null; pollPickNote(); pollSuggest();
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-sugslug]');
+  if(!b){ if(!e.target.closest('.poll-add')) { const x=$('#pollSug'); if(x) x.innerHTML=''; } return; }
+  const v = (venuesCache && venuesCache.venues || []).find(x => (x.slug||x.name) === b.dataset.sugslug);
+  if(!v) return;
+  pollVenuePick = v; const inp = $('#pollOptLabel'); if(inp) inp.value = v.name;
+  const box = $('#pollSug'); if(box) box.innerHTML = ''; pollPickNote();
+});

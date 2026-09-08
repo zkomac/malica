@@ -263,6 +263,29 @@ class MalicaTests(unittest.TestCase):
         code, j = self.c.post("/api/days/%s/poll-vote" % day["id"], {"optionId": out_id, "person": "Ana"})
         self.assertEqual(code, 400)
 
+    def test_poll_winner_venue_lands_on_day(self):
+        self._login()
+        code, j = self.c.post("/api/days", {"kind": "poll"})
+        day = j["days"][-1]
+        venue = {"id": "v1", "slug": "pinsarna", "name": "Pinsarna", "url": "https://wolt.com/sl/svn/ljubljana/restaurant/pinsarna", "rating": 9.4}
+        code, j = self.c.post("/api/days/%s/poll-option" % day["id"],
+                              {"label": "Pinsarna", "optKind": "order", "person": "Ana", "url": venue["url"], "venue": venue})
+        oid = j["days"][0]["poll"]["options"][0]["id"]
+        self.c.post("/api/days/%s/poll-vote" % day["id"], {"optionId": oid, "person": "Ana"})
+        code, j = self.c.post("/api/days/%s/poll-close" % day["id"], {})
+        d = j["days"][0]
+        self.assertEqual(d["kind"], "order")
+        self.assertEqual(d["venue"]["slug"], "pinsarna")
+        self.assertEqual(d["url"], venue["url"])
+        # a non-wolt venue url is stripped, not stored
+        code, j = self.c.post("/api/days", {"kind": "poll"})
+        day2 = j["days"][-1]
+        code, j = self.c.post("/api/days/%s/poll-option" % day2["id"],
+                              {"label": "X", "optKind": "order", "person": "Ana", "url": "https://evil.example/x", "venue": {"url": "https://evil.example/x"}})
+        o = j["days"][-1]["poll"]["options"][0]
+        self.assertEqual(o["url"], "")
+        self.assertEqual(o["venue"]["url"], "")
+
     def test_poll_close_needs_options(self):
         self._login()
         code, j = self.c.post("/api/days", {"kind": "poll"})

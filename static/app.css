@@ -333,3 +333,10 @@
 .poll-label .tag-k{margin:0 6px 0 0}
 .votepanel .poll-opt{flex-wrap:wrap}
 .votepanel .poll-opt .btn{flex:0 0 auto;margin-left:auto}
+
+/* poll option autocomplete */
+.poll-sug{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.poll-sug-item{display:flex;align-items:center;gap:10px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);cursor:pointer;text-align:left;font-size:.95rem}
+.poll-sug-item:hover{border-color:var(--blue);background:var(--blue-soft)}
+.poll-sug-item img{width:34px;height:34px;object-fit:cover;border-radius:8px;flex:0 0 auto}
+#pollPicked{margin-top:6px;color:#0f6e3a}

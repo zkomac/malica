@@ -10,7 +10,7 @@ $('#meSelect').addEventListener('change', async e=>{
 $('#locBtn').addEventListener('click', locationModal);
 $('#helpBtn').addEventListener('click', helpModal);
 
-document.addEventListener('click', e=>{ const sb=e.target.closest('.seg-btn'); if(sb && sb.closest('.seg')){ sb.closest('.seg').querySelectorAll('.seg-btn').forEach(x=>x.classList.toggle('active',x===sb)); } });
+document.addEventListener('click', e=>{ const sb=e.target.closest('.seg-btn'); if(sb && sb.closest('.seg')){ sb.closest('.seg').querySelectorAll('.seg-btn').forEach(x=>x.classList.toggle('active',x===sb)); if(typeof pollSuggest==='function') pollSuggest(); } });
 document.addEventListener('click', async e=>{
   if(!e.target.closest('[data-act="daymenu"]')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
   if(e.target.closest('[data-close]') || (e.target.classList.contains('backdrop'))) { closeModal(); return; }
@@ -52,7 +52,7 @@ document.addEventListener('click', async e=>{
   else if(t.dataset.act==='pickfor'){ if(!me){ welcomeModal(); return; } pickerModal(day.id); }
   else if(t.dataset.act==='attend'){ if(!me){ welcomeModal(); return; } await mutate(`/api/days/${day.id}/attend`,{person:me, going:t.dataset.going==='1'}); }
   else if(t.dataset.act==='out-bill'){ outBillModal(day); }
-  else if(t.dataset.act==='poll-add'){ if(!me){ welcomeModal(); return; } const inp=$('#pollOptLabel'); const label=(inp.value||'').trim(); if(!label){ inp.focus(); return; } const seg=$('#pollSeg .seg-btn.active'); await mutate(`/api/days/${day.id}/poll-option`,{label, optKind: seg?seg.dataset.optkind:'out', person:me}); }
+  else if(t.dataset.act==='poll-add'){ if(!me){ welcomeModal(); return; } const inp=$('#pollOptLabel'); const label=(inp.value||'').trim(); if(!label){ inp.focus(); return; } const seg=$('#pollSeg .seg-btn.active'); await mutate(`/api/days/${day.id}/poll-option`,{label, optKind: seg?seg.dataset.optkind:'out', person:me, url: pollVenuePick?pollVenuePick.url:'', venue: pollVenuePick||null}); pollVenuePick=null; }
   else if(t.dataset.act==='poll-close'){ if(!confirm('Zaključim anketo in iz zmagovalca naredim načrt?')) return; const s=await mutate(`/api/days/${day.id}/poll-close`,{}); const d=s.days.find(x=>x.id===day.id); tab='menu'; render(); toast(`✓ Zmagal/a: ${d?d.restaurant:''}`); }
   else if(t.dataset.act==='seg'){ /* handled below */ }
   else if(t.dataset.pollvote){ const x=e.target.closest('[data-pollremove]'); if(x) return; if(!me){ welcomeModal(); return; } const opt=day.poll.options.find(o=>o.id===t.dataset.pollvote); const mine=opt&&opt.votes.includes(me); await mutate(`/api/days/${day.id}/poll-vote`,{optionId: mine?'':t.dataset.pollvote, person:me}); }

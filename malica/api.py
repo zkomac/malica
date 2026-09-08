@@ -170,9 +170,14 @@ def handle_post(state, parts, body, who):
                 okind = body.get("optKind") if body.get("optKind") in ("order", "out") else "out"
                 if len(poll["options"]) >= 20:
                     raise ValueError("Preveč opcij")
+                url = text(body.get("url"), 500)
+                venue = body.get("venue") if isinstance(body.get("venue"), dict) else None
+                if venue and not is_wolt_url(text(venue.get("url"), 500)):
+                    venue["url"] = ""
                 poll["options"].append({
                     "id": uuid.uuid4().hex[:6], "label": label, "kind": okind,
                     "by": text(body.get("person"), 60), "votes": [],
+                    "url": url if is_wolt_url(url) else "", "venue": venue,
                 })
                 return "dodal/a v anketo: %s" % label
 
@@ -206,6 +211,8 @@ def handle_post(state, parts, body, who):
                 poll["winnerId"] = winner["id"]
                 day["kind"] = winner["kind"]
                 day["restaurant"] = winner["label"]
+                day["url"] = winner.get("url") or ""
+                day["venue"] = winner.get("venue")
                 if winner["kind"] == "out":
                     day.setdefault("going", [])
                     day.setdefault("skip", [])

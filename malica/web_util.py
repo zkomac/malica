@@ -28,7 +28,9 @@ def _static(start_response, path):
         ctype += "; charset=utf-8"
     with open(full, "rb") as f:
         data = f.read()
-    start_response("200 OK", [("Content-Type", ctype), ("Content-Length", str(len(data)))])
+    # html/js/css revalidate on every load (deploys must show up immediately); images may cache
+    cache = "public, max-age=86400" if full.endswith((".png", ".jpg", ".svg", ".ico", ".webp")) else "no-cache"
+    start_response("200 OK", [("Content-Type", ctype), ("Content-Length", str(len(data))), ("Cache-Control", cache)])
     return [data]
 
 

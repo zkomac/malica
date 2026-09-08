@@ -10,9 +10,12 @@ from .auth import _PIN_FAILS, _group_from_cookie, _sign
 from .config import LOCK
 from .domain import find_day, text
 from .pages import _pin_page
-from .storage import _now, group_by_pin, load, log_line, save
+from .storage import create_group, _now, group_by_pin, load, log_line, save
 from .web_util import _json, _read_body, _static
 from .wolt import wolt_basket_payload, wolt_menu, wolt_venues
+
+_NEWGROUP_IP = {}  # ip -> [count, window_start]
+
 
 def application(environ, start_response):
     path = environ.get("PATH_INFO", "/") or "/"
@@ -22,7 +25,7 @@ def application(environ, start_response):
     if path in ("/icon.svg", "/apple-touch-icon.png", "/manifest.json", "/og.png", "/privacy.html", "/wolt-logo.png", "/app.css", "/qr.js") or path.startswith("/js/") and method == "GET":
         return _static(start_response, path)
 
-    # ---- vstop s config.PIN-om skupine
+    # ---- vstop s PIN-om skupine
     if path == "/pin" and method == "POST":
         ip = environ.get("HTTP_X_REAL_IP") or environ.get("REMOTE_ADDR", "?")
         fails = _PIN_FAILS.get(ip, [0, 0])
@@ -31,7 +34,7 @@ def application(environ, start_response):
         try:
             form = urllib.parse.parse_qs(_read_body(environ, 4096).decode("utf-8", "replace"))
         except ValueError:
-            return _pin_page(start_response, "Napačen config.PIN")
+            return _pin_page(start_response, "Napačen PIN")
         with LOCK:
             g = group_by_pin(form.get("pin", [""])[0].strip())
         if g:
@@ -45,7 +48,33 @@ def application(environ, start_response):
             fails = [0, time.time() + 60]
         _PIN_FAILS[ip] = fails
         time.sleep(0.5)
-        return _pin_page(start_response, "Napačen config.PIN")
+        return _pin_page(start_response, "Napačen PIN")
+
+    # ---- nova skupina s same vstopne strani (samopostrežno, omejeno po IP)
+    if path == "/newgroup" and method == "POST":
+        ip = environ.get("HTTP_X_REAL_IP") or environ.get("REMOTE_ADDR", "?")
+        made = _NEWGROUP_IP.get(ip, [0, 0.0])
+        if made[1] < time.time() - 3600:
+            made = [0, time.time()]
+        if made[0] >= 3:
+            return _pin_page(start_response, ng_error="S tega naslova so bile pravkar ustvarjene 3 skupine — poskusi čez eno uro")
+        try:
+            form = urllib.parse.parse_qs(_read_body(environ, 4096).decode("utf-8", "replace"))
+        except ValueError:
+            return _pin_page(start_response, ng_error="Neveljaven vnos")
+        name = text(form.get("name", [""])[0], 60).strip()
+        pin = form.get("pin", [""])[0].strip()
+        try:
+            with LOCK:
+                gid = create_group(name, pin)
+        except ValueError as e:
+            return _pin_page(start_response, ng_error=str(e))
+        made[0] += 1
+        _NEWGROUP_IP[ip] = made
+        secure = "; Secure" if environ.get("HTTP_X_FORWARDED_PROTO") == "https" else ""
+        cookie = "malica_g=%s.%s; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax%s" % (gid, _sign(gid + ":" + pin), secure)
+        start_response("303 See Other", [("Location", "/"), ("Set-Cookie", cookie)])
+        return [b""]
 
     if path == "/logout":
         start_response("303 See Other", [("Location", "/"), ("Set-Cookie", "malica_g=; Path=/; Max-Age=0")])
@@ -70,7 +99,7 @@ def application(environ, start_response):
         group = _group_from_cookie(environ)
     if not group:
         if path.startswith("/api/"):
-            return _json(start_response, {"error": "Potreben je config.PIN — osveži stran"}, "401 Unauthorized")
+            return _json(start_response, {"error": "Potreben je PIN — osveži stran"}, "401 Unauthorized")
         return _pin_page(start_response)
     gid = group["id"]
 

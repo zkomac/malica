@@ -1,7 +1,7 @@
 """Sessions and authentication.
 
 A group session is a cookie ``malica_g=<gid>.<hmac>`` signed with a per-install secret;
-the admin token is an HMAC of the admin config.PIN. Comparisons are constant-time and config.PIN
+the admin token is an HMAC of the admin PIN. Comparisons are constant-time and PIN
 guessing is rate limited per IP.
 """
 import hashlib

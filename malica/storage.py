@@ -7,6 +7,7 @@ import glob
 import hmac
 import json
 import os
+import re
 import shutil
 from datetime import datetime
 
@@ -49,6 +50,40 @@ def save_groups(g):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(g, f, ensure_ascii=False, indent=2)
     os.replace(tmp, groups_file())
+
+
+def create_group(name, pin):
+    """Register a new group and create its empty state. Returns the group id."""
+    if not name or not re.match(r"^\d{4,8}$", pin or ""):
+        raise ValueError("Ime in PIN (4–8 številk) sta obvezna")
+    groups = load_groups()
+    if group_by_pin(pin):
+        raise ValueError("Ta PIN že uporablja druga skupina — izberi drugega")
+    if len(groups["groups"]) >= 200:
+        raise ValueError("Preveč skupin na tem strežniku")
+    gid = re.sub(r"[^a-z0-9]+", "-", name.lower().replace("č", "c").replace("š", "s").replace("ž", "z")).strip("-") or "skupina"
+    base, i = gid, 2
+    while find_group(gid):
+        gid = "%s-%d" % (base, i); i += 1
+    groups["groups"].append({"id": gid, "name": name, "pin": pin, "created": _now().isoformat(timespec="seconds")})
+    save_groups(groups)
+    save(gid, default_state(), "", "ustvarjena skupina %s" % name)
+    return gid
+
+
+def delete_group(gid):
+    """Remove a group from the registry; its files move to data/trash/ (recoverable by hand)."""
+    groups = load_groups()
+    if not any(g["id"] == gid for g in groups["groups"]):
+        raise ValueError("Ni take skupine")
+    groups["groups"] = [g for g in groups["groups"] if g["id"] != gid]
+    save_groups(groups)
+    trash = os.path.join(config.DATA_DIR, "trash", "%s-%s" % (gid, _now().strftime("%Y%m%d-%H%M%S")))
+    os.makedirs(trash, exist_ok=True)
+    for name in (gid + ".json", gid + ".history", gid + ".log.jsonl"):
+        src = os.path.join(config.DATA_DIR, name)
+        if os.path.exists(src):
+            shutil.move(src, os.path.join(trash, name))
 
 
 def find_group(gid):

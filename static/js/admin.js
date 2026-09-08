@@ -28,7 +28,8 @@ function adminModal(){
         h += `<div class="card"><h3 style="display:flex;align-items:center;gap:10px">${esc(g.name)} <span class="pill-badge">PIN ${esc(g.pin)}</span>${g.id===d.active?'<span class="sub">(trenutna)</span>':''}</h3>
           <div class="meta" style="margin-bottom:8px"><span>${g.people.length} ${plural(g.people.length,'oseba','osebi','osebe','oseb')}</span><span>${g.days} dni</span><span>📍 ${esc(g.location)}</span>${g.last?`<span>zadnja sprememba ${esc(g.last.replace('T',' ').replace(/[+-]\d\d:\d\d$/,''))}</span>`:''}</div>
           <div style="margin-bottom:10px">${g.people.map(p=>`<span class="tag">${esc(p)} <button type="button" class="tagx" data-rmperson="${esc(p)}" data-gid="${esc(g.id)}" title="Odstrani osebo iz skupine">×</button></span>`).join('')||'<span class="sub">še nihče</span>'}</div>
-          <form class="row agEdit" data-gid="${esc(g.id)}"><div><label>Ime</label><input name="name" value="${esc(g.name)}"></div><div><label>PIN</label><input name="pin" value="${esc(g.pin)}" inputmode="numeric" pattern="\\d{4,8}"></div><div class="auto"><button class="btn">Shrani</button></div></form></div>`;
+          <form class="row agEdit" data-gid="${esc(g.id)}"><div><label>Ime</label><input name="name" value="${esc(g.name)}"></div><div><label>PIN</label><input name="pin" value="${esc(g.pin)}" inputmode="numeric" pattern="\\d{4,8}"></div><div class="auto"><button class="btn">Shrani</button></div>
+          <div class="auto"><button class="btn" type="button" style="color:var(--red,#e0453a);border-color:#f5c6c2" data-delgroup="${esc(g.id)}" data-gname="${esc(g.name)}">🗑 Izbriši skupino</button></div></form></div>`;
       }
     } else if(view==='log'){
       h += groupSel(d.groups, gid);
@@ -45,6 +46,9 @@ function adminModal(){
   const m=$('.modal');
   m.addEventListener('click', async e=>{
     const t=e.target.closest('[data-av]'); if(t){ view=t.dataset.av; [...m.querySelectorAll('[data-av]')].forEach(x=>x.classList.toggle('active',x===t)); draw(); return; }
+    const dg=e.target.closest('[data-delgroup]'); if(dg){ const nm=dg.dataset.gname;
+      if(prompt(`Izbrišem skupino „${nm}“ z vsemi podatki (dnevi, naročila, dnevnik)? Podatki se premaknejo v data/trash na strežniku. Za potrditev vpiši ime skupine:`)!==nm){ toast('Ime se ne ujema — nič ni izbrisano'); return; }
+      await adminApi(`/api/admin/group/${dg.dataset.delgroup}/delete`,{}); toast('✓ Skupina izbrisana'); gid=null; draw(); return; }
     const x=e.target.closest('[data-rmperson]'); if(x){ if(!confirm(`Odstranim osebo „${x.dataset.rmperson}“ iz skupine? Njena pretekla naročila ostanejo v zgodovini.`)) return; await adminApi(`/api/admin/group/${x.dataset.gid}/removeperson`,{name:x.dataset.rmperson}); toast('✓ Oseba odstranjena'); lastJson=''; refresh(); draw(); return; }
     const r=e.target.closest('[data-restore]'); if(r){ if(!confirm('Obnovim to različico? Trenutno stanje bo shranjeno kot različica.')) return; await adminApi(`/api/admin/group/${gid}/restore`,{version:r.dataset.restore}); toast('✓ Obnovljeno'); lastJson=''; refresh(); draw(); }
   });

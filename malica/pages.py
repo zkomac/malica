@@ -1,4 +1,4 @@
-"""Server-rendered landing page (config.PIN entry). The app itself is ``static/index.html``."""
+"""Server-rendered landing page (PIN entry). The app itself is ``static/index.html``."""
 from . import config
 
 PIN_PAGE = """<!doctype html><html lang="sl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -24,6 +24,11 @@ PIN_PAGE = """<!doctype html><html lang="sl"><head><meta charset="utf-8"><meta n
 input{width:100%;box-sizing:border-box;font-size:1.3rem;text-align:center;letter-spacing:.3em;padding:12px;border:1px solid #e4e4e5;border-radius:8px}
 button{width:100%;margin-top:10px;padding:12px;background:#009de0;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer}
 .err{color:#e0453a;font-size:.9rem;margin-top:10px}
+.orsep{display:flex;align-items:center;gap:10px;color:#a3a3a3;font-size:.8rem;margin:16px 0 10px}
+.orsep:before,.orsep:after{content:"";flex:1;height:1px;background:#e4e4e5}
+.ngbtn{background:#fff;color:#009de0;border:2px solid #009de0;font-weight:700}
+.txt{letter-spacing:normal;font-size:1.05rem;text-align:left}
+[hidden]{display:none}
 .foot{color:#a3a3a3;font-size:.78rem;margin-top:18px}
 .extnote{background:#eef8fc;border:1px solid #cfeaf7;border-radius:10px;padding:12px 14px;margin:16px 0 0;font-size:.85rem;color:#333;line-height:1.45;text-align:left}
 .extnote.extok{background:#edf9f1;border-color:#bfe6cc}
@@ -46,10 +51,20 @@ button{width:100%;margin-top:10px;padding:12px;background:#009de0;color:#fff;bor
     <li><span class="n">3</span><div>Eden naroči na Woltu, Malica pa izračuna, kdo komu koliko dolguje.</div></li>
   </ol>
   <form method="post" action="/pin">
-    <div class="pinlbl">config.PIN tvoje skupine</div>
+    <div class="pinlbl">Je kdo za vaše sodelavce že naredil skupino? Vnesi njen PIN.</div>
     <input name="pin" type="password" inputmode="numeric" autofocus autocomplete="one-time-code">
     <button>Vstopi</button>__ERR__
   </form>
+  <div class="orsep"><span>ali</span></div>
+  <button type="button" class="ngbtn" id="ngToggle">➕ Naredi novo skupino za svoje sodelavce</button>
+  <form method="post" action="/newgroup" id="ngForm" __NGHIDE__>
+    <div class="pinlbl" style="margin-top:12px">Ime skupine (npr. ime ekipe ali podjetja)</div>
+    <input name="name" maxlength="60" required class="txt" placeholder="npr. Pro Plus — marketing">
+    <div class="pinlbl" style="margin-top:10px">Izberi PIN (4–8 številk) in ga deli s sodelavci</div>
+    <input name="pin" inputmode="numeric" pattern="\\d{4,8}" required autocomplete="off">
+    <button>Ustvari skupino in vstopi</button>__NGERR__
+  </form>
+  <script>document.getElementById('ngToggle').addEventListener('click',function(){var f=document.getElementById('ngForm');f.hidden=!f.hidden;if(!f.hidden)f.querySelector('input').focus();});</script>
   __EXT__
   <script>
   // Razširitev Malica ↔ Wolt ob nalaganju pošlje sporočilo "ready" → pokaži zelen status namesto poziva.
@@ -65,14 +80,16 @@ button{width:100%;margin-top:10px;padding:12px;background:#009de0;color:#fff;bor
     <div class="sub">Tisti, ki naroča, odda skupno naročilo s svojim Wolt računom. Prijavi se na Woltu v novem zavihku in se potem vrni sem.</div>
     <a class="woltbtn" href="https://wolt.com/sl/login" target="_blank" rel="noopener">Prijava v Wolt ↗</a>
   </div>
-  <div class="foot">Samo za tvoje sodelavce — noter prideš s config.PIN-om. Malica ni povezana z Woltom.</div>
+  <div class="foot">Samo za tvoje sodelavce — noter prideš s PIN-om. Malica ni povezana z Woltom.</div>
 </div></body></html>"""
 
 EXT_NOTE = """<div class="extnote" id="extnote">💻 <b>Na računalniku (Chrome ali Edge):</b> namesti razširitev <b>Malica ↔ Wolt</b> — kdor naroča, z enim klikom prenese vse jedi v svojo Wolt košarico.<br><a class="extbtn" href="%s" target="_blank" rel="noopener">Namesti razširitev ↗</a></div>"""
 
 
-def _pin_page(start_response, error=""):
+def _pin_page(start_response, error="", ng_error=""):
     page = PIN_PAGE.replace("__ERR__", '<div class="err">%s</div>' % error if error else "")
+    page = page.replace("__NGERR__", '<div class="err">%s</div>' % ng_error if ng_error else "")
+    page = page.replace("__NGHIDE__", "" if ng_error else "hidden")
     page = page.replace("__EXT__", (EXT_NOTE % config.EXT_URL) if config.EXT_URL else "")
     body = page.encode("utf-8")
     start_response("200 OK", [("Content-Type", "text/html; charset=utf-8"), ("Content-Length", str(len(body)))])

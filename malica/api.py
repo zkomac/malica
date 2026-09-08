@@ -45,6 +45,8 @@ def handle_post(state, parts, body, who):
         d = text(body.get("date")) or date.today().isoformat()
         if not re.match(r"^\d{4}-\d{2}-\d{2}$", d):
             raise ValueError("Neveljaven datum")
+        if sum(1 for x in state["days"] if x.get("date") == d) >= 3:
+            raise ValueError("Za ta dan so že 3 predlogi — glasujte ali kakšnega izbrišite")
         venue = body.get("venue") if isinstance(body.get("venue"), dict) else None
         if venue and not is_wolt_url(text(venue.get("url"), 500)):
             venue["url"] = ""

@@ -207,6 +207,14 @@ class MalicaTests(unittest.TestCase):
         code, j = self.c.post("/api/days", {"kind": "out", "restaurant": ""})
         self.assertEqual(code, 400)
 
+    def test_max_three_proposals_per_day(self):
+        self._login()
+        for i in range(3):
+            self._day(restaurant="R%d" % i)
+        code, j = self.c.post("/api/days", {"kind": "out", "restaurant": "Cetrti", "date": storage._now().strftime("%Y-%m-%d")})
+        self.assertEqual(code, 400)
+        self.assertIn("3 predlogi", j["error"])
+
     # -- competing proposals ----------------------------------------------
     def test_day_vote_single_per_date(self):
         self._login()
